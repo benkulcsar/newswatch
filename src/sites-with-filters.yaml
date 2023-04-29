@@ -1,0 +1,80 @@
+- name: bbc
+  url: https://www.bbc.co.uk
+  filters:
+    - tag: span
+      attrs:
+        aria-hidden:
+- name: guardian
+  url: https://www.theguardian.com/uk
+  filters:
+    - tag: a
+      attrs:
+        data-link-name: article
+- name: independent
+  url: https://www.independent.co.uk
+  filters:
+    - attrs:
+        class: headline
+    - tag: h2
+- name: telegraph
+  url: https://www.telegraph.co.uk
+  filters:
+    - attrs:
+        class: list-headline__text
+- name: dailymail
+  url: https://www.dailymail.co.uk
+  filters:
+    - tag: a
+      attrs:
+        itemprop: url
+- name: sun
+  url: https://www.thesun.co.uk
+  filters:
+    - tag: p
+      attrs:
+        class: teaser__subdeck
+- name: mirror
+  url: https://www.mirror.co.uk
+  filters:
+    - tag: h2
+- name: express
+  url: https://www.express.co.uk
+  filters:
+    - tag: h2
+    - tag: h4
+- name: standard
+  url: https://www.standard.co.uk/
+  filters:
+    - tag: h2
+    - tag: div
+      attrs:
+        class: headline
+- name: star
+  url: https://www.dailystar.co.uk/
+  filters:
+    - tag: a
+      attrs:
+        class: headline
+- name: metro
+  url: https://metro.co.uk/
+  filters:
+    - tag: h3
+- name: times
+  url: https://www.thetimes.co.uk/
+  filters:
+    - tag: h3
+- name: week
+  url: https://www.theweek.co.uk/
+  filters:
+    - attrs:
+        class: screen-reader-text
+- name: ft
+  url: https://www.ft.com/
+  filters:
+    - tag: span
+      attrs:
+        id:
+- name: inews
+  url: https://inews.co.uk/
+  filters:
+    - tag: h2
