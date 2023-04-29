@@ -1,0 +1,38 @@
+- name: site1
+  url: https://www.site1.com
+  filters:
+    - tag: a
+      attrs:
+        href: hey
+- name: site2
+  url: https://site2.com
+  filters:
+    - tag: x
+      attrs:
+        keyonly:
+- name: site3
+  url: https://site3.co.uk
+  filters:
+    - tag: p
+- name: site4
+  url: https://site4.news
+  filters:
+    - tag: h2
+    - tag: h3
+    - tag: h4
+- name: site5
+  url: https://site5.co
+  filters:
+    - attrs:
+        aaa: AAA
+    - attrs:
+        bbb: BBB
+- name: site6
+  url: https://www.site6.com
+  filters:
+    - tag: A
+      attrs:
+        B: C
+    - tag: XX
+      attrs:
+        YY: ZZ

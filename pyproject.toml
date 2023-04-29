@@ -1,0 +1,32 @@
+[project]
+name = "newswatch"
+description = "Visualise aggregated metrics of selected subreddits"
+requires-python = "~=3.10.5"
+version = "0.0.1"
+dependencies = [
+    "pydantic~=1.10.7"
+]
+
+[project.optional-dependencies]
+test = [
+    "flake8~=6.0.0",
+    "mypy~=1.2.0",
+    "pre-commit~=3.2.2",
+    "pytest~=7.3.1",
+]
+
+extract = [
+    "beautifulsoup4~=4.12.2",
+    "requests~=2.28.2"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 120
+target_version = ['py310']
+include = '\.pyi?$'
