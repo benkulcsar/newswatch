@@ -37,7 +37,7 @@ def test_get_parsed_html_content_from_website(mock_get):
 
 @pytest.mark.parametrize("site_name, site_index", [("site1", 0), ("site3", 2), ("site4", 3)])
 def test_extract_headlines_from_html(site_name, site_index, expected_sites_with_bs_match_filters, expected_headlines):
-    with open(f"/home/brownbear/projects/newswatch/tests/unit/extract/site_htmls/{site_name}.html", "r") as f:
+    with open(f"tests/unit/extract/site_htmls/{site_name}.html", "r") as f:
         html = f.read()
     parsed_html = BeautifulSoup(html, "html.parser")
     bs_match_filters = expected_sites_with_bs_match_filters[site_index].filters
