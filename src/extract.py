@@ -65,7 +65,7 @@ def extract():
         sites_with_filters_yaml="src/sites-with-filters.yaml",
     )
 
-    all_site_headline_records: list = []
+    all_site_headline_records = []
 
     for site in sites_with_bs_match_filters:
         parsed_html = get_parsed_html_content_from_website(url=site.url)
