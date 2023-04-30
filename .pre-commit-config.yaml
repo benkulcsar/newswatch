@@ -7,7 +7,6 @@ repos:
       - id: trailing-whitespace
       - id: check-ast
       - id: check-toml
-      - id: detect-aws-credentials
       - id: detect-private-key
       - id: mixed-line-ending
   - repo: https://github.com/antonbabenko/pre-commit-terraform
@@ -44,4 +43,3 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [ types-all ]
-        exclude: ^testing/resources/
