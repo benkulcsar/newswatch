@@ -1,29 +1,27 @@
-name: Newswatch
+name: Code Quaility Checks & Tests
 
-on: [push]
+on:
+  push
 
 jobs:
-  build:
-
+  code-quality-and-tests:
+    name: code-quality-and-tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10"]
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.10'
+
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .[test,extract]
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-      - name: Pre-commit checks
-        run: |
-          pre-commit run -a
-      - name: Test with pytest
-        run: |
-          pytest
+        run: make install-dependencies
+
+      - name: Run pre-commit hooks
+        run: make pc
+
+      - name: Run tests
+        run: make test
