@@ -1,4 +1,5 @@
 name: Terraform Plan
+run-name: '${{github.action}} ${{github.ref_name}}'
 
 on: push
 
