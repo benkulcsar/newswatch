@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  call-workflow-passing-data:
-    uses: ./.github/workflows/terraform-reusable.yaml@terraform-from-github
+  terraform-plan:
+    uses: ./.github/workflows/terraform-reusable.yaml
     with:
       command: plan
