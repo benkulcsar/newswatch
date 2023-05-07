@@ -1,5 +1,5 @@
 name: Terraform Plan
-run-name: '${{github.action}} ${{github.ref_name}}'
+run-name: '${{github.workflow}} ${{github.sha}}'
 
 on: push
 

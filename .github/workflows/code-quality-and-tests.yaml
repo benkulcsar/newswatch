@@ -1,5 +1,5 @@
 name: Code Quaility Checks & Tests
-run-name: '${{github.workflow}} ${{github.ref_name}}'
+run-name: '${{github.workflow}} ${{github.sha}}'
 
 on:
   push

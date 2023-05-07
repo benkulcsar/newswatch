@@ -1,4 +1,5 @@
 name: Terraform Destroy
+run-name: '${{github.workflow}} ${{github.sha}}'
 
 on: workflow_dispatch
 
