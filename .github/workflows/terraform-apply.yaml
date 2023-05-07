@@ -1,7 +1,7 @@
-name: Terraform Plan
+name: Terraform Apply
 
 on:
-  [workflow_dispatch]
+  [push, workflow_dispatch]
 
 permissions:
   id-token: write
@@ -14,7 +14,7 @@ env:
 
 jobs:
   terraform-plan:
-    name: terraform-plan
+    name: terraform-apply
     runs-on: ubuntu-latest
 
     steps:
@@ -36,5 +36,5 @@ jobs:
       - name: Terraform init
         run: make tf-init
 
-      - name: Terraform plan
-        run: make tf-plan
+      - name: Terraform apply
+        run: make tf-apply
