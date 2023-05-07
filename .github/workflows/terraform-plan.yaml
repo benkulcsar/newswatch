@@ -1,6 +1,6 @@
 name: Terraform Plan
 
-on: [push, workflow_dispatch]
+on: [workflow_dispatch]
 
 env:
   TF_VAR_NEWSWATCH_S3_BUCKET: ${{ secrets.TF_VAR_NEWSWATCH_S3_BUCKET }}
@@ -26,7 +26,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/terraform_newswatch_role
-          aws-region: us-east-1
+          aws-region: eu-west-1
 
       - name: Terraform init
         run: make tf-init
