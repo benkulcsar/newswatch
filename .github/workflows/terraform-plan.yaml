@@ -1,7 +1,7 @@
 name: Terraform Plan
 run-name: '${{ github.workflow }}'
 
-on: push
+on: workflow_dispatch
 
 permissions:
   id-token: write
