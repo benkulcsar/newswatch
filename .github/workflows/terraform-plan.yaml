@@ -1,6 +1,7 @@
 name: Terraform Plan
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
 
 env:
   TF_VAR_NEWSWATCH_S3_BUCKET: ${{ secrets.TF_VAR_NEWSWATCH_S3_BUCKET }}
