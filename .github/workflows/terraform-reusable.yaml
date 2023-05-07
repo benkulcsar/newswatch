@@ -1,7 +1,11 @@
-name: Terraform Apply
+name: Reusable Terraform
 
 on:
-  [workflow_dispatch]
+  workflow_call:
+    inputs:
+      command:
+        type: string
+        default: 'plan'
 
 permissions:
   id-token: write
@@ -13,8 +17,8 @@ env:
   TERRAFORM_NEWSWATCH_DYAMODB_TABLE: ${{ secrets.TERRAFORM_NEWSWATCH_DYAMODB_TABLE }}
 
 jobs:
-  terraform-plan:
-    name: terraform-apply
+  terraform:
+    name: terraform
     runs-on: ubuntu-latest
 
     steps:
@@ -36,5 +40,14 @@ jobs:
       - name: Terraform init
         run: make tf-init
 
+      - name: Terraform plan
+        if: (inputs.command == 'plan')
+        run: make tf-plan
+
       - name: Terraform apply
+        if: (inputs.command == 'apply')
         run: make tf-apply
+
+      - name: Terraform destroy
+        if: (inputs.command == 'destroy')
+        run: make tf-destroy
