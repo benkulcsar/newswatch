@@ -1,4 +1,4 @@
-name: Code Quaility Checks & Tests
+name: Code Quality Checks & Tests
 run-name: '${{ github.workflow }}'
 
 on:
