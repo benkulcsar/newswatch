@@ -1,5 +1,8 @@
+import datetime
+
 import pytest
 from common.models import BsMatchFilter
+from common.models import SiteHeadlineCollection
 from common.models import SiteWithBsMatchFilters
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
@@ -52,3 +55,27 @@ def expected_headlines():
         "site3": set(["More p tags", "Hey ho, let's go!"]),
         "site4": set(["yes", "YES"]),
     }
+
+
+@pytest.fixture
+def site_headline_collections():
+    return [
+        SiteHeadlineCollection(
+            name="abc",
+            timestamp=datetime.datetime(2021, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
+            headlines=["abc", "xyz", "123"],
+        ),
+        SiteHeadlineCollection(
+            name="def",
+            timestamp=datetime.datetime(2022, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
+            headlines=["def", "zzz", "456"],
+        ),
+    ]
+
+
+@pytest.fixture
+def expected_json_string():
+    return (
+        """[{"name": "abc", "timestamp": "2021-10-10 10:10:10+00:00", "headlines": ["abc", "xyz", "123"]}, """
+        """{"name": "def", "timestamp": "2022-10-10 10:10:10+00:00", "headlines": ["def", "zzz", "456"]}]"""
+    )

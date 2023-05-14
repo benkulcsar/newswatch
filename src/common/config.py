@@ -4,3 +4,9 @@ def get_request_headers() -> dict[str, str]:
                                 AppleWebKit/537.36 (KHTML, like Gecko) \
                                 Chrome/50.0.2661.102 Safari/537.36""",
     }
+
+
+def get_s3_bucket_name() -> str:
+    import os
+
+    return os.environ.get("TF_VAR_NEWSWATCH_S3_BUCKET", "")
