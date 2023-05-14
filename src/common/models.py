@@ -17,7 +17,7 @@ class SiteWithBsMatchFilters(BaseModel):
     filters: list[BsMatchFilter]
 
 
-class SiteHeadlineRecords(BaseModel):
+class SiteHeadlineCollection(BaseModel):
     name: StrictStr
     timestamp: datetime
     headlines: list[StrictStr]

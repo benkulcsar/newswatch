@@ -1,14 +1,16 @@
-import os
+import json
 from collections.abc import Iterable
 from datetime import datetime
 from datetime import timezone
 
+import boto3
 import requests
 import yaml
 from bs4 import BeautifulSoup
 from common.config import get_request_headers
+from common.config import get_s3_bucket_name
 from common.models import BsMatchFilter
-from common.models import SiteHeadlineRecords
+from common.models import SiteHeadlineCollection
 from common.models import SiteWithBsMatchFilters
 
 
@@ -37,7 +39,7 @@ def extract_headlines_from_html(parsed_html: BeautifulSoup, bs_match_filters: li
     for filter in bs_match_filters:
         tag = filter.tag
         if filter.attrs:
-            attrs = {k: v or True for k, v in filter.attrs.items()}  # TO REVIEW
+            attrs = {k: v or True for k, v in filter.attrs.items()}
         else:
             attrs = None
         filtered_elements = parsed_html.find_all(name=tag, attrs=attrs)
@@ -46,40 +48,51 @@ def extract_headlines_from_html(parsed_html: BeautifulSoup, bs_match_filters: li
     return extracted_headlines
 
 
-def save_site_headlines(all_site_headline_records: Iterable[SiteHeadlineRecords]):
-    ts = datetime.now(timezone.utc)
-    filename = f"headlines-{ts.year}-{ts.month:02}-{ts.day:02}-{ts.hour:02}.json"
+def convert_site_headline_collections_to_json_string(
+    site_headline_collections: Iterable[SiteHeadlineCollection],
+) -> str:
+    return json.dumps([dict(records) for records in site_headline_collections], default=str)
 
-    try:
-        os.remove(filename)
-    except OSError:
-        pass
 
-    with open(filename, "a") as file:
-        for record in all_site_headline_records:
-            file.write(record.json())
+def upload_data_to_s3(bucket_name: str, key: str, data: str) -> dict:
+    s3 = boto3.client("s3")
+    return s3.put_object(Bucket=bucket_name, Key=key, Body=data)
 
 
 def extract():
+    consistent_timestamp = datetime.now(timezone.utc)
+
+    # Scrape
     sites_with_bs_match_filters = read_sites_with_bs_match_filters_from_yaml(
         sites_with_filters_yaml="src/sites-with-filters.yaml",
     )
 
-    all_site_headline_records = []
+    site_headline_collections = []
 
     for site in sites_with_bs_match_filters:
         parsed_html = get_parsed_html_content_from_website(url=site.url)
         extracted_headlines = extract_headlines_from_html(parsed_html=parsed_html, bs_match_filters=site.filters)
 
-        site_headline_records = SiteHeadlineRecords(
-            name=site.name,
-            timestamp=datetime.now(timezone.utc),
-            headlines=extracted_headlines,
+        site_headline_collections.append(
+            SiteHeadlineCollection(
+                name=site.name,
+                timestamp=consistent_timestamp,
+                headlines=extracted_headlines,
+            ),
         )
 
-        all_site_headline_records.append(site_headline_records)
+    # Save
+    ts = consistent_timestamp
+    object_key = f"extracted-headlines/year={ts.year}/month={ts.month:02}/day={ts.day:02}/hour={ts.hour:02}.json"
+    bucket_name = get_s3_bucket_name()
 
-    save_site_headlines(all_site_headline_records=all_site_headline_records)
+    payload = convert_site_headline_collections_to_json_string(site_headline_collections=site_headline_collections)
+
+    _ = upload_data_to_s3(
+        bucket_name=bucket_name,
+        key=object_key,
+        data=payload,
+    )
 
 
 if __name__ == "__main__":
