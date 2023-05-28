@@ -1,99 +1,93 @@
-import json
-from collections.abc import Iterable
-from datetime import datetime
-from datetime import timezone
+import logging
+from datetime import datetime, timezone
 
-import boto3
 import requests
 import yaml
 from bs4 import BeautifulSoup
-from common.config import get_request_headers
-from common.config import get_s3_bucket_name
-from common.models import BsMatchFilter
-from common.models import SiteHeadlineCollection
-from common.models import SiteWithBsMatchFilters
+
+from common.config import (
+    get_extract_s3_prefix,
+    get_request_headers,
+    get_s3_bucket_name,
+    get_sites_yaml_path,
+)
+from common.models import Filter, Site, SiteHeadlineList
+from common.utils import (
+    build_s3_key,
+    coalesce_dict_values,
+    convert_objects_to_json_string,
+    upload_data_to_s3,
+)
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
-def read_sites_with_bs_match_filters_from_yaml(sites_with_filters_yaml: str) -> list[SiteWithBsMatchFilters]:
-    sites_with_bs_match_filters: list = []
-    with open(sites_with_filters_yaml, "r") as stream:
+def load_sites_from_yaml(yaml_path: str) -> list[Site]:
+    with open(yaml_path, "r") as stream:
         sites_from_yaml = yaml.safe_load(stream)
-    for site_from_yaml in sites_from_yaml:
-        sites_with_bs_match_filter = SiteWithBsMatchFilters(**site_from_yaml)
-        sites_with_bs_match_filters.append(sites_with_bs_match_filter)
-
-    return sites_with_bs_match_filters
+        return [Site(**site) for site in sites_from_yaml]
 
 
-def get_parsed_html_content_from_website(url: str) -> BeautifulSoup:
-    headers = get_request_headers()
-    page = requests.get(url=url, headers=headers)
-    content = page.content
-
-    parsed_content = BeautifulSoup(content, "html.parser")
-    return parsed_content
+def scrape_url(url: str) -> BeautifulSoup:
+    page = requests.get(url=url, headers=get_request_headers())
+    return BeautifulSoup(markup=page.content, features="html.parser")
 
 
-def extract_headlines_from_html(parsed_html: BeautifulSoup, bs_match_filters: list[BsMatchFilter]) -> set[str]:
-    extracted_headlines: set = set()
-    for filter in bs_match_filters:
-        tag = filter.tag
-        if filter.attrs:
-            attrs = {k: v or True for k, v in filter.attrs.items()}
-        else:
-            attrs = None
-        filtered_elements = parsed_html.find_all(name=tag, attrs=attrs)
-        filtered_headlines = [element.text for element in filtered_elements]
-        extracted_headlines.update(filtered_headlines)
-    return extracted_headlines
+def extract_headline(bs: BeautifulSoup, filters: list[Filter]) -> set[str]:
+    return {
+        element.text
+        for filter in filters
+        for element in bs.find_all(
+            name=filter.tag,
+            attrs=coalesce_dict_values(filter.attrs, True),
+        )
+    }
 
 
-def convert_site_headline_collections_to_json_string(
-    site_headline_collections: Iterable[SiteHeadlineCollection],
-) -> str:
-    return json.dumps([dict(records) for records in site_headline_collections], default=str)
+def extract_headlines(site: Site) -> SiteHeadlineList:
+    return SiteHeadlineList(
+        name=site.name,
+        timestamp=datetime.now(timezone.utc),
+        headlines=extract_headline(
+            bs=scrape_url(site.url),
+            filters=site.filters,
+        ),
+    )
 
 
-def upload_data_to_s3(bucket_name: str, key: str, data: str) -> dict:
-    s3 = boto3.client("s3")
-    return s3.put_object(Bucket=bucket_name, Key=key, Body=data)
+def get_site_headline_lists(sites: list[Site]) -> list[SiteHeadlineList]:
+    logger.info(f"Sites to be scraped: {[site.name for site in sites]}")
+    return [extract_headlines(site) for site in sites]
 
 
 def extract():
-    consistent_timestamp = datetime.now(timezone.utc)
+    timestamp_at_start = datetime.now(timezone.utc)
+    logger.info(f"Extracting headlines at {timestamp_at_start}")
 
-    # Scrape
-    sites_with_bs_match_filters = read_sites_with_bs_match_filters_from_yaml(
-        sites_with_filters_yaml="src/sites-with-filters.yaml",
+    site_headline_lists = get_site_headline_lists(
+        sites=load_sites_from_yaml(
+            yaml_path=get_sites_yaml_path(),
+        ),
     )
 
-    site_headline_collections = []
+    extracted_data_jsonstring = convert_objects_to_json_string(site_headline_lists)
+    object_key = build_s3_key(prefix=get_extract_s3_prefix(), timestamp=timestamp_at_start, extension="json")
 
-    for site in sites_with_bs_match_filters:
-        parsed_html = get_parsed_html_content_from_website(url=site.url)
-        extracted_headlines = extract_headlines_from_html(parsed_html=parsed_html, bs_match_filters=site.filters)
-
-        site_headline_collections.append(
-            SiteHeadlineCollection(
-                name=site.name,
-                timestamp=consistent_timestamp,
-                headlines=extracted_headlines,
-            ),
-        )
-
-    # Save
-    ts = consistent_timestamp
-    object_key = f"extracted-headlines/year={ts.year}/month={ts.month:02}/day={ts.day:02}/hour={ts.hour:02}.json"
-    bucket_name = get_s3_bucket_name()
-
-    payload = convert_site_headline_collections_to_json_string(site_headline_collections=site_headline_collections)
-
-    _ = upload_data_to_s3(
-        bucket_name=bucket_name,
+    s3_response = upload_data_to_s3(
+        bucket_name=get_s3_bucket_name(),
         key=object_key,
-        data=payload,
+        data=extracted_data_jsonstring,
     )
+
+    if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
+        logger.info(f"Uploaded headlines to S3: {object_key}")
+
+
+def lambda_handler(event, context):
+    extract()
 
 
 if __name__ == "__main__":
+    logger.info("Running local version of extract.py")
     extract()

@@ -10,3 +10,11 @@ def get_s3_bucket_name() -> str:
     import os
 
     return os.environ.get("TF_VAR_NEWSWATCH_S3_BUCKET", "")
+
+
+def get_extract_s3_prefix() -> str:
+    return "extracted-headlines"
+
+
+def get_sites_yaml_path() -> str:
+    return "src/sites-with-filters.yaml"
