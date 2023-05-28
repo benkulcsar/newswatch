@@ -14,12 +14,6 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_tflint
-  - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.9.0
-    hooks:
-      - id: reorder-python-imports
-        exclude: ^(pre_commit/resources/|testing/resources/python3_hooks_repo/)
-        args: [ --py39-plus ]
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v2.3.0
     hooks:

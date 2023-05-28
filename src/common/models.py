@@ -1,23 +1,27 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
-from pydantic import HttpUrl
-from pydantic import StrictStr
+from pydantic import BaseModel, HttpUrl, StrictStr
 
 
-class BsMatchFilter(BaseModel):
+class Filter(BaseModel):
+    """A filter to be applied to a BeautifulSoup object."""
+
     tag: Optional[StrictStr]
     attrs: Optional[dict[str, Optional[str]]]
 
 
-class SiteWithBsMatchFilters(BaseModel):
+class Site(BaseModel):
+    """A website to be scraped."""
+
     name: StrictStr
     url: HttpUrl
-    filters: list[BsMatchFilter]
+    filters: list[Filter]
 
 
-class SiteHeadlineCollection(BaseModel):
+class SiteHeadlineList(BaseModel):
+    """A list of headlines from a website."""
+
     name: StrictStr
     timestamp: datetime
     headlines: list[StrictStr]

@@ -10,7 +10,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "flake8~=6.0.0",
-    "moto~=4.1.9",
+    "moto[s3]~=4.1.9",
     "mypy~=1.2.0",
     "pre-commit~=3.2.2",
     "pytest~=7.3.1",

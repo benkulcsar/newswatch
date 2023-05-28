@@ -1,49 +1,49 @@
 import datetime
 
 import pytest
-from common.models import BsMatchFilter
-from common.models import SiteHeadlineCollection
-from common.models import SiteWithBsMatchFilters
+from common.models import Filter
+from common.models import Site
+from common.models import SiteHeadlineList
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
 
 
 @pytest.fixture
-def expected_sites_with_bs_match_filters():
+def expected_sites():
     return [
-        SiteWithBsMatchFilters(
+        Site(
             name="site1",
             url=parse_obj_as(HttpUrl, "https://www.site1.com"),
-            filters=[BsMatchFilter(tag="a", attrs={"href": "hey"})],
+            filters=[Filter(tag="a", attrs={"href": "hey"})],
         ),
-        SiteWithBsMatchFilters(
+        Site(
             name="site2",
             url=parse_obj_as(HttpUrl, "https://site2.com"),
-            filters=[BsMatchFilter(tag="x", attrs={"keyonly": None})],
+            filters=[Filter(tag="x", attrs={"keyonly": None})],
         ),
-        SiteWithBsMatchFilters(
+        Site(
             name="site3",
             url=parse_obj_as(HttpUrl, "https://site3.co.uk"),
-            filters=[BsMatchFilter(tag="p", attrs=None)],
+            filters=[Filter(tag="p", attrs=None)],
         ),
-        SiteWithBsMatchFilters(
+        Site(
             name="site4",
             url=parse_obj_as(HttpUrl, "https://site4.news"),
             filters=[
-                BsMatchFilter(tag="h2", attrs=None),
-                BsMatchFilter(tag="h3", attrs=None),
-                BsMatchFilter(tag="h4", attrs=None),
+                Filter(tag="h2", attrs=None),
+                Filter(tag="h3", attrs=None),
+                Filter(tag="h4", attrs=None),
             ],
         ),
-        SiteWithBsMatchFilters(
+        Site(
             name="site5",
             url=parse_obj_as(HttpUrl, "https://site5.co"),
-            filters=[BsMatchFilter(tag=None, attrs={"aaa": "AAA"}), BsMatchFilter(tag=None, attrs={"bbb": "BBB"})],
+            filters=[Filter(tag=None, attrs={"aaa": "AAA"}), Filter(tag=None, attrs={"bbb": "BBB"})],
         ),
-        SiteWithBsMatchFilters(
+        Site(
             name="site6",
             url=parse_obj_as(HttpUrl, "https://www.site6.com"),
-            filters=[BsMatchFilter(tag="A", attrs={"B": "C"}), BsMatchFilter(tag="XX", attrs={"YY": "ZZ"})],
+            filters=[Filter(tag="A", attrs={"B": "C"}), Filter(tag="XX", attrs={"YY": "ZZ"})],
         ),
     ]
 
@@ -60,12 +60,12 @@ def expected_headlines():
 @pytest.fixture
 def site_headline_collections():
     return [
-        SiteHeadlineCollection(
+        SiteHeadlineList(
             name="abc",
             timestamp=datetime.datetime(2021, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
             headlines=["abc", "xyz", "123"],
         ),
-        SiteHeadlineCollection(
+        SiteHeadlineList(
             name="def",
             timestamp=datetime.datetime(2022, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
             headlines=["def", "zzz", "456"],
