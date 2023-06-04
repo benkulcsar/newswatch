@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: newswatch
+
+Globals:
+  Function:
+    Timeout: 180
+    MemorySize: 128
+    Runtime: python3.10
+
+Parameters:
+  Env:
+    Type: String
+    AllowedValues:
+      - dev
+      - live
+  LogLevel:
+    Type: String
+  NewsWatchS3BucketName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: NewsWatchS3BucketName
+    Description: Newswatch S3 bucket name without the environment suffix
+
+
+Resources:
+  NewswatchS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${NewsWatchS3BucketName}-${Env}
+      VersioningConfiguration:
+        Status: Enabled
+
+  ExtractFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub newswatch-extract-${Env}
+      Handler: extract.lambda_handler
+      CodeUri: src
+      Description: !Sub Newswatch Extract Function (${Env})
+      Architectures:
+      - x86_64
+      Tracing: Active
+      Policies:
+        S3WritePolicy:
+          BucketName: !Ref NewswatchS3Bucket
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 * * * ? *)
+            Enabled: !If
+              - !Equals [ !Ref Env, live ]
+              - true
+              - false
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref NewswatchS3Bucket
+          EXTRACT_S3_PREFIX: !Sub extracted-headlines-${Env}
+          SITES_YAML_PATH: sites-with-filters.yaml
+          LOG_LEVEL: !Ref LogLevel

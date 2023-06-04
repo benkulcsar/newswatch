@@ -1,0 +1,31 @@
+name: Reusable Deploy Workflow
+
+on:
+  workflow_call:
+    inputs:
+      target-env:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: 'Sam deploy to ${{ inputs.target-env }}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+      - name: Setup SAM
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/sam-deploy-newswatch
+          aws-region: eu-west-1
+      - run: sam build --use-container
+      - run: sam deploy --config-env ${{ inputs.target-env }} --no-confirm-changeset --no-fail-on-empty-changeset

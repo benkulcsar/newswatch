@@ -1,0 +1,17 @@
+
+name: Deploy Dev
+run-name: '${{ github.workflow }}'
+
+on:
+  workflow_dispatch
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-dev:
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      target-env: dev
+    secrets: inherit

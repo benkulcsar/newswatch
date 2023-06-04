@@ -1,3 +1,4 @@
+import os
 import logging
 from datetime import datetime, timezone
 
@@ -5,12 +6,6 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-from common.config import (
-    get_extract_s3_prefix,
-    get_request_headers,
-    get_s3_bucket_name,
-    get_sites_yaml_path,
-)
 from common.models import Filter, Site, SiteHeadlineList
 from common.utils import (
     build_s3_key,
@@ -18,9 +13,6 @@ from common.utils import (
     convert_objects_to_json_string,
     upload_data_to_s3,
 )
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def load_sites_from_yaml(yaml_path: str) -> list[Site]:
@@ -30,7 +22,7 @@ def load_sites_from_yaml(yaml_path: str) -> list[Site]:
 
 
 def scrape_url(url: str) -> BeautifulSoup:
-    page = requests.get(url=url, headers=get_request_headers())
+    page = requests.get(url=url, headers=request_headers)
     return BeautifulSoup(markup=page.content, features="html.parser")
 
 
@@ -67,15 +59,15 @@ def extract():
 
     site_headline_lists = get_site_headline_lists(
         sites=load_sites_from_yaml(
-            yaml_path=get_sites_yaml_path(),
+            yaml_path=sites_yaml_path,
         ),
     )
 
     extracted_data_jsonstring = convert_objects_to_json_string(site_headline_lists)
-    object_key = build_s3_key(prefix=get_extract_s3_prefix(), timestamp=timestamp_at_start, extension="json")
+    object_key = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="json")
 
     s3_response = upload_data_to_s3(
-        bucket_name=get_s3_bucket_name(),
+        bucket_name=s3_bucket_name,
         key=object_key,
         data=extracted_data_jsonstring,
     )
@@ -84,10 +76,25 @@ def extract():
         logger.info(f"Uploaded headlines to S3: {object_key}")
 
 
+# Lambda cold start
+
+request_headers = {
+    "User-Agent": """Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) \
+                            AppleWebKit/537.36 (KHTML, like Gecko) \
+                            Chrome/50.0.2661.102 Safari/537.36""",
+}
+
+s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
+extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")
+sites_yaml_path = os.environ.get("SITES_YAML_PATH", "")
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=log_level)
+
+
+# Lambda handler
+
+
 def lambda_handler(event, context):
-    extract()
-
-
-if __name__ == "__main__":
-    logger.info("Running local version of extract.py")
     extract()

@@ -1,0 +1,5 @@
+beautifulsoup4~=4.12.2
+boto3~=1.26.130
+requests~=2.28.2
+PyYAML~=6.0
+pydantic~=1.10.7
