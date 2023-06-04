@@ -1,0 +1,26 @@
+version = 0.1
+
+[live.deploy.parameters]
+stack_name = "newswatch-live"
+resolve_s3 = true
+s3_prefix = "newswatch-live"
+region = "eu-west-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides=[
+  "Env=live",
+  "LogLevel=INFO"
+]
+
+
+[dev.deploy.parameters]
+stack_name = "newswatch-dev"
+resolve_s3 = true
+s3_prefix = "newswatch-dev"
+region = "eu-west-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides=[
+  "Env=dev",
+  "LogLevel=DEBUG"
+]

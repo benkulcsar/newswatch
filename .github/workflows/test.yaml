@@ -1,8 +1,7 @@
-name: Code Quality Checks & Tests
+name: Test
 run-name: '${{ github.workflow }}'
 
-on:
-  push
+on: [push]
 
 jobs:
   code-quality-and-tests:
@@ -18,11 +17,19 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Setup SAM
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
       - name: Install dependencies
-        run: make install-dependencies
+        run: make deps
 
       - name: Run pre-commit hooks
         run: make pc
 
       - name: Run tests
         run: make test
+
+      - name: Validate SAM template
+        run: make vs
