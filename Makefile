@@ -4,8 +4,11 @@ pc:
 test:
 	pytest
 
-vs:
+sv:
 	sam validate --lint
+
+sb:
+	sam build
 
 setup:
 	echo "Local env setup to be added"
@@ -13,10 +16,10 @@ setup:
 deps:
 	python -m pip install --upgrade pip; pip install -r src/requirements.txt; pip install -r tests/requirements.txt;
 
-deploy-dev:
-	sam build; sam deploy --config-env dev;
+deploy-dev: sv sb
+	sam deploy --config-env dev;
 
-deploy-live:
-	sam build; sam deploy --config-env live;
+deploy-live: sv sb
+	sam deploy --config-env live;
 
-check: pc test vs
+check: pc test sv

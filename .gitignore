@@ -201,6 +201,6 @@ terraform.rc
 
 # End of https://www.toptal.com/developers/gitignore/api/python,terraform
 
-# Ignore zip files created for the lambda functions
-# We could always delete the zip files but that would cause "terraform plan" to fail.
+# Project-specific
 *.zip
+.aws-sam

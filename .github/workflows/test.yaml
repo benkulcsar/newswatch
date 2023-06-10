@@ -32,4 +32,4 @@ jobs:
         run: make test
 
       - name: Validate SAM template
-        run: make vs
+        run: make sv
