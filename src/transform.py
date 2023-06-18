@@ -48,7 +48,7 @@ def transform(bucket: str, site_headline_list_key: str):
     )
 
     s3_response = upload_data_to_s3(
-        bucket_name="benkl-newswatch-dev",
+        bucket_name=bucket,
         key=object_key,
         data=json.dumps(word_counts),
     )
