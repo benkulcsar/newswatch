@@ -10,7 +10,7 @@ from extract import extract_headline, load_sites_from_yaml, scrape_url
 
 def test_load_sites_from_yaml(expected_sites):
     sites = load_sites_from_yaml(
-        yaml_path="tests/unit/extract/sites-with-filters_yaml/valid.yaml",
+        yaml_path="tests/fixtures/sites-with-filters_yaml/valid.yaml",
     )
     assert sites == expected_sites
 
@@ -19,7 +19,7 @@ def test_load_sites_from_yaml(expected_sites):
 def test_load_sites_from_yaml_exception(yaml):
     with pytest.raises(ValidationError):
         _ = load_sites_from_yaml(
-            yaml_path=f"tests/unit/extract/sites-with-filters_yaml/{yaml}",
+            yaml_path=f"tests/fixtures/sites-with-filters_yaml/{yaml}",
         )
 
 
@@ -36,7 +36,7 @@ def test_scrape_url(mock_get):
 
 @pytest.mark.parametrize("site_name, site_index", [("site1", 0), ("site3", 2), ("site4", 3)])
 def test_extract_headline(site_name, site_index, expected_sites, expected_headlines):
-    with open(f"tests/unit/extract/site_htmls/{site_name}.html", "r") as f:
+    with open(f"tests/fixtures/site_htmls/{site_name}.html", "r") as f:
         html = f.read()
     parsed_html = BeautifulSoup(html, "html.parser")
     bs_match_filters = expected_sites[site_index].filters
