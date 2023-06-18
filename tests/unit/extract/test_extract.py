@@ -7,8 +7,6 @@ from requests.models import Response
 
 from extract import extract_headline, load_sites_from_yaml, scrape_url
 
-# TODO: import config
-
 
 def test_load_sites_from_yaml(expected_sites):
     sites = load_sites_from_yaml(

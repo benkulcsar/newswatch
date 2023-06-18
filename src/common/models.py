@@ -25,3 +25,10 @@ class SiteHeadlineList(BaseModel):
     name: StrictStr
     timestamp: datetime
     headlines: list[StrictStr]
+
+
+class WordCounts(BaseModel):
+    """A list of word counts for a given timestamp."""
+
+    timestamp: datetime
+    word_counts: dict[str, int]

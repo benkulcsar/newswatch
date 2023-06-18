@@ -14,21 +14,73 @@ Parameters:
     AllowedValues:
       - dev
       - live
-  LogLevel:
-    Type: String
   NewsWatchS3BucketName:
     Type: AWS::SSM::Parameter::Value<String>
     Default: NewsWatchS3BucketName
     Description: Newswatch S3 bucket name without the environment suffix
+  ExtractS3Prefix:
+    Type: String
+    Default: headlines
+  TransformS3Prefix:
+    Type: String
+    Default: word-counts
+  ProjectTag:
+    Type: String
+    Default: newswatch
 
+Mappings:
+  EnvMapping:
+    dev:
+      ExtractSchedule: cron(15 * * * ? *)
+      LogLevel: DEBUG
+    live:
+      ExtractSchedule: cron(30 * * * ? *)
+      LogLevel: INFO
 
 Resources:
+
   NewswatchS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${NewsWatchS3BucketName}-${Env}
+      BucketName: !Sub "${NewsWatchS3BucketName}-${Env}"
       VersioningConfiguration:
         Status: Enabled
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      Tags:
+        - Key: project
+          Value: !Ref ProjectTag
+
+  HeadlinesLandedEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub newswatch-headlines-landed-${Env}
+      Description: !Sub Newswatch Headlines Landed Event Rule (${Env})
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Sub "${NewsWatchS3BucketName}-${Env}"
+          object:
+            key:
+              - prefix: !Ref ExtractS3Prefix
+      Targets:
+        - Arn: !GetAtt TransformFunction.Arn
+          Id: !Sub newswatch-transform-${Env}
+
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TransformFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HeadlinesLandedEventRule.Arn
 
   ExtractFunction:
     Type: AWS::Serverless::Function
@@ -47,14 +99,36 @@ Resources:
         ScheduledEvent:
           Type: Schedule
           Properties:
-            Schedule: cron(30 * * * ? *)
-            Enabled: !If
-              - !Equals [ !Ref Env, live ]
-              - true
-              - false
+            Name: !Sub newswatch-extract-schedule-${Env}
+            Schedule: !FindInMap [ EnvMapping, !Ref Env, ExtractSchedule ]
+            Enabled: true
       Environment:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
-          EXTRACT_S3_PREFIX: !Sub extracted-headlines-${Env}
+          EXTRACT_S3_PREFIX: !Ref ExtractS3Prefix
           SITES_YAML_PATH: sites-with-filters.yaml
-          LOG_LEVEL: !Ref LogLevel
+          LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
+      Tags:
+        project: !Ref ProjectTag
+
+  TransformFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      MemorySize: 512
+      FunctionName: !Sub newswatch-transform-${Env}
+      Handler: transform.lambda_handler
+      CodeUri: src
+      Description: !Sub Newswatch Transform Function (${Env})
+      Architectures:
+      - x86_64
+      Tracing: Active
+      Policies:
+        S3CrudPolicy:
+          BucketName: !Ref NewswatchS3Bucket
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref NewswatchS3Bucket
+          TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
+          LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
+      Tags:
+        project: !Ref ProjectTag

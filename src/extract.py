@@ -63,13 +63,12 @@ def extract():
         ),
     )
 
-    extracted_data_jsonstring = convert_objects_to_json_string(site_headline_lists)
     object_key = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="json")
 
     s3_response = upload_data_to_s3(
         bucket_name=s3_bucket_name,
         key=object_key,
-        data=extracted_data_jsonstring,
+        data=convert_objects_to_json_string(site_headline_lists),
     )
 
     if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
