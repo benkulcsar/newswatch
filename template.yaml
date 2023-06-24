@@ -18,12 +18,16 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: NewsWatchS3BucketName
     Description: Newswatch S3 bucket name without the environment suffix
+  NewsWatchBigQueryTableId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: NewsWatchBigQueryTableId
+    Description: Newswatch table id in BigQuery
   ExtractS3Prefix:
     Type: String
     Default: headlines
   TransformS3Prefix:
     Type: String
-    Default: word-counts
+    Default: word-frequencies
   ProjectTag:
     Type: String
     Default: newswatch
@@ -74,13 +78,43 @@ Resources:
         - Arn: !GetAtt TransformFunction.Arn
           Id: !Sub newswatch-transform-${Env}
 
-  PermissionForEventsToInvokeLambda:
+  WordFrequenciesLandedEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub newswatch-wordfrequencies-landed-${Env}
+      Description: !Sub Newswatch Word Frequencies Landed Event Rule (${Env})
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Sub "${NewsWatchS3BucketName}-${Env}"
+          object:
+            key:
+              - prefix: !Ref TransformS3Prefix
+      Targets:
+        - Arn: !GetAtt LoadFunction.Arn
+          Id: !Sub newswatch-load-${Env}
+
+  PermissionForEventsToInvokeTransformLambda:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref TransformFunction
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt HeadlinesLandedEventRule.Arn
+
+  PermissionForEventsToInvokeLoadLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LoadFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt WordFrequenciesLandedEventRule.Arn
 
   ExtractFunction:
     Type: AWS::Serverless::Function
@@ -129,6 +163,34 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
+          LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
+      Tags:
+        project: !Ref ProjectTag
+
+  LoadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      MemorySize: 128
+      FunctionName: !Sub newswatch-load-${Env}
+      Handler: load.lambda_handler
+      CodeUri: src
+      Description: !Sub Newswatch Load Function (${Env})
+      Architectures:
+      - x86_64
+      Tracing: Active
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref NewswatchS3Bucket
+        - SSMParameterReadPolicy:
+            ParameterName: NewsWatchBigQueryCredentials
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref NewswatchS3Bucket
+          BIGQUERY_TABLE_ID: !Sub "${NewsWatchBigQueryTableId}-${Env}"
+          TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
+          MIN_WORD_LENGTH: 3
+          MIN_FREQUENCY: 20
+          EXCLUDED_WORDS_TXT_PATH: excluded-words.txt
           LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
       Tags:
         project: !Ref ProjectTag

@@ -1,20 +1,22 @@
 import nltk
 import os
 import re
-import json
 import logging
 
 from textblob import Word
 from collections import Counter
 
-from common.models import SiteHeadlineList
+from common.models import SiteHeadlines, SiteWordFrequencies, WordFrequencies
 
 from common.utils import (
     get_datetime_from_s3_key,
     download_data_from_s3,
     convert_json_string_to_objects,
     sort_dict_by_value,
+    merge_dictionaries_summing_values,
     build_s3_key,
+    extract_s3_bucket_and_key_from_event,
+    convert_objects_to_json_string,
     upload_data_to_s3,
 )
 
@@ -30,16 +32,32 @@ def count_words_in_text(text: str) -> dict:
     return dict(Counter(title_words_lemmatised))
 
 
+def get_site_word_frequencies_from_site_headlines(site_headlines: SiteHeadlines) -> SiteWordFrequencies:
+    site_word_counts: dict[str, int] = count_words_in_text(" ".join(site_headlines.headlines))
+    total_word_count: int = sum(site_word_counts.values())
+    return SiteWordFrequencies(
+        name=site_headlines.name,
+        frequencies={word: count * 100_000 / total_word_count for word, count in site_word_counts.items()},
+    )
+
+
+def merge_site_word_frequencies(site_word_frequencies: list[SiteWordFrequencies]) -> WordFrequencies:
+    site_count = len(site_word_frequencies)
+    summed_frequencies = merge_dictionaries_summing_values(*[site.frequencies for site in site_word_frequencies])
+    return WordFrequencies(
+        frequencies=sort_dict_by_value({word: count / site_count for word, count in summed_frequencies.items()}),
+    )
+
+
 def transform(bucket: str, site_headline_list_key: str):
-    logger.info(f"Transforming headlines from {site_headline_list_key}")
+    logger.info(f"Transforming headlines from {bucket}/{site_headline_list_key}")
 
-    data = download_data_from_s3(bucket_name=bucket, key=site_headline_list_key)
-
-    site_headline_lists = convert_json_string_to_objects(json_string=data, cls=SiteHeadlineList)
-    all_headlines = [site_headline_list.headlines for site_headline_list in site_headline_lists]
-    all_headlines_str = " ".join([item for s in all_headlines for item in s])
-
-    word_counts = sort_dict_by_value(count_words_in_text(text=all_headlines_str))
+    json_data: str = download_data_from_s3(bucket_name=bucket, key=site_headline_list_key)
+    site_headlines_list: list[SiteHeadlines] = convert_json_string_to_objects(json_string=json_data, cls=SiteHeadlines)
+    site_word_frequencies: list[SiteWordFrequencies] = [
+        get_site_word_frequencies_from_site_headlines(site_headlines) for site_headlines in site_headlines_list
+    ]
+    word_frequencies = merge_site_word_frequencies(site_word_frequencies)
 
     object_key = build_s3_key(
         prefix=transform_s3_prefix,
@@ -50,14 +68,15 @@ def transform(bucket: str, site_headline_list_key: str):
     s3_response = upload_data_to_s3(
         bucket_name=bucket,
         key=object_key,
-        data=json.dumps(word_counts),
+        data=convert_objects_to_json_string([word_frequencies]),
     )
 
     if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
-        logger.info(f"Uploaded word counts to S3: {object_key}")
+        logger.info(f"Uploaded word counts to S3: {bucket}/{object_key}")
 
 
 # Lambda cold start
+
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
@@ -69,12 +88,10 @@ logging.basicConfig(level=log_level)
 nltk.data.path.append("/tmp")
 nltk.download("wordnet", download_dir="/tmp")
 
+
 # Lambda handler
 
 
 def lambda_handler(event, context):
-    bucket = event["detail"]["bucket"]["name"]
-    key = event["detail"]["object"]["key"]
-    if bucket != s3_bucket_name:
-        logger.warning(f"Bucket name {bucket} does not match expected bucket name {s3_bucket_name}")
+    bucket, key = extract_s3_bucket_and_key_from_event(event)
     transform(bucket, key)

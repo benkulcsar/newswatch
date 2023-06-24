@@ -204,3 +204,4 @@ terraform.rc
 # Project-specific
 *.zip
 .aws-sam
+.vscode
