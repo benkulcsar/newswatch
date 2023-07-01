@@ -1,15 +1,14 @@
 import datetime
 
 import pytest
-from common.models import Filter
-from common.models import Site
-from common.models import SiteHeadlineList
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
 
+from common.models import Filter, Site, SiteHeadlines, SiteWordFrequencies, WordFrequencies, LoadRecord
+
 
 @pytest.fixture
-def expected_sites():
+def test_sites() -> list[Site]:
     return [
         Site(
             name="site1",
@@ -49,33 +48,88 @@ def expected_sites():
 
 
 @pytest.fixture
-def expected_headlines():
+def test_headlines() -> dict[str, list[str]]:
     return {
-        "site1": set(["abc", "xyz", "123"]),
-        "site3": set(["More p tags", "Hey ho, let's go!"]),
-        "site4": set(["yes", "YES"]),
+        "site1": sorted(["abc", "xyz", "123"]),
+        "site3": sorted(["More p tags", "Hey ho, let's go!"]),
+        "site4": sorted(["yes", "YES"]),
     }
 
 
 @pytest.fixture
-def site_headline_collections():
+def test_site_headlines_collection() -> list[SiteHeadlines]:
     return [
-        SiteHeadlineList(
+        SiteHeadlines(
             name="abc",
             timestamp=datetime.datetime(2021, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
             headlines=["abc", "xyz", "123"],
         ),
-        SiteHeadlineList(
+        SiteHeadlines(
             name="def",
             timestamp=datetime.datetime(2022, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
-            headlines=["def", "zzz", "456"],
+            headlines=["def", "xyz", "456"],
         ),
     ]
 
 
 @pytest.fixture
-def expected_json_string():
-    return (
-        """[{"name": "abc", "timestamp": "2021-10-10 10:10:10+00:00", "headlines": ["abc", "xyz", "123"]}, """
-        """{"name": "def", "timestamp": "2022-10-10 10:10:10+00:00", "headlines": ["def", "zzz", "456"]}]"""
+def test_site_word_frequencies_collection() -> list[SiteWordFrequencies]:
+    return [
+        SiteWordFrequencies(
+            name="abc",
+            frequencies={"abc": 33333, "xyz": 33333, "123": 33333},
+        ),
+        SiteWordFrequencies(
+            name="def",
+            frequencies={"def": 33333, "xyz": 33333, "456": 33333},
+        ),
+    ]
+
+
+@pytest.fixture
+def test_word_frequencies() -> WordFrequencies:
+    return WordFrequencies(
+        frequencies={
+            "abc": 16666,
+            "xyz": 33333,
+            "123": 16666,
+            "def": 16666,
+            "456": 16666,
+        },
     )
+
+
+@pytest.fixture
+def test_timestamp_str() -> str:
+    return "2023-06-10 10:00:00+00:00"
+
+
+@pytest.fixture
+def test_load_records(test_timestamp_str) -> list[LoadRecord]:
+    return [
+        LoadRecord(
+            timestamp=test_timestamp_str,
+            word="abc",
+            frequency=16666,
+        ),
+        LoadRecord(
+            timestamp=test_timestamp_str,
+            word="xyz",
+            frequency=33333,
+        ),
+        LoadRecord(
+            timestamp=test_timestamp_str,
+            word="123",
+            frequency=16666,
+        ),
+        LoadRecord(
+            timestamp=test_timestamp_str,
+            word="def",
+            frequency=16666,
+        ),
+        LoadRecord(
+            timestamp=test_timestamp_str,
+            word="456",
+            frequency=16666,
+        ),
+    ]

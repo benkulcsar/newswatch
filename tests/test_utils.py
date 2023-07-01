@@ -1,11 +1,14 @@
 import datetime
+import json
 import pytest
 import boto3
 import moto
-from common.utils import build_s3_key
 from common.utils import (
+    build_s3_key,
     convert_objects_to_json_string,
     coalesce_dict_values,
+    merge_dictionaries_summing_values,
+    extract_s3_bucket_and_key_from_event,
     upload_data_to_s3,
     get_datetime_from_s3_key,
     sort_dict_by_value,
@@ -24,6 +27,17 @@ from common.utils import (
 )
 def test_coalesce_dict_values(source_dict, to, expected_dict):
     assert coalesce_dict_values(source_dict, to) == expected_dict
+
+
+@pytest.mark.parametrize(
+    "source_dicts, expected_dict",
+    [
+        ([{"a": 1, "b": 2, "c": 3}, {"b": 10, "d": 20}], {"a": 1, "b": 12, "c": 3, "d": 20}),
+        ([{"a": 0.1, "b": 0.2}, {"b": 10, "c": 20}], {"a": 0.1, "b": 10.2, "c": 20}),
+    ],
+)
+def test_merge_dictionaries_summing_values(source_dicts, expected_dict):
+    assert merge_dictionaries_summing_values(*source_dicts) == expected_dict
 
 
 class MockObject:
@@ -82,6 +96,20 @@ def test_sort_dict_by_value():
     assert tuple(sort_dict_by_value({"a": 1, "b": 2})) == tuple({"b": 2, "a": 1})
 
 
+def test_extract_s3_bucket_and_key_from_event():
+    test_event = json.loads(
+        """
+        {
+            "detail-type": ["Object Created"],
+            "source": ["aws.s3"],
+            "detail": {"bucket": {"name": "test-bucket"}, "object": {"key": "prefix/test-key"}}
+        }
+    """,
+    )
+    expected_bucket, expected_key = "test-bucket", "prefix/test-key"
+    assert extract_s3_bucket_and_key_from_event(test_event) == (expected_bucket, expected_key)
+
+
 @moto.mock_s3
 def test_upload_data_to_s3():
     test_bucket, test_key, test_data = "test-bucket", "test-object-key", '{"test": "test"}'
@@ -92,3 +120,7 @@ def test_upload_data_to_s3():
 
     assert response["ResponseMetadata"]["HTTPStatusCode"] == 200
     assert s3_client.get_object(Bucket=test_bucket, Key=test_key)["Body"].read().decode("utf-8") == test_data
+
+
+def test_insert_data_into_bigquery_table():
+    pass
