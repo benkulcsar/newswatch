@@ -23,6 +23,7 @@ s3_bucket_name = "test-bucket"
 extract_s3_prefix = "extracted-headlines"
 transform_s3_prefix = "word-frequencies"
 bigquery_table = "nwproject.nwdataset.nwtable"
+bigquery_delete_before_write = "true"
 min_word_length = 3
 min_frequency = 10_000
 excluded_words = ["and", "the", "bobby"]
@@ -149,6 +150,7 @@ mock_bigquery_client = MockBigQueryClient()
 @patch("extract.get_current_timestamp", return_value=timestamp)
 @patch("transform.transform_s3_prefix", transform_s3_prefix)
 @patch("load.bigquery_table_id", bigquery_table)
+@patch("load.bigquery_delete_before_write", bigquery_delete_before_write)
 @patch("load.min_word_length", min_word_length)
 @patch("load.min_frequency", min_frequency)
 @patch("load.excluded_words", excluded_words)

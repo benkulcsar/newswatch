@@ -64,11 +64,15 @@ def load(bucket: str, word_frequencies_key: str):
 
     records_to_load_dicts: list[dict] = [dict(lr) for lr in records_to_load]
 
-    try:
-        delete_timestamp_from_bigquery(table_id=bigquery_table_id, timestamp=timestamp)
-    except DeleteFailedError as e:
-        logging.error(f"Failed to delete {timestamp} from {bigquery_table_id}. Insert may not be idempotent.")
-        logging.error(f"Reason: {e.errors}")
+    if bigquery_delete_before_write == "true":
+        logging.info(f"Attempting to delete: {timestamp} from {bigquery_table_id}")
+        try:
+            delete_timestamp_from_bigquery(table_id=bigquery_table_id, timestamp=timestamp)
+        except DeleteFailedError as e:
+            logging.error(f"Failed to delete {timestamp} from {bigquery_table_id}. Insert may not be idempotent.")
+            logging.error(f"Reason: {e.errors}")
+    else:
+        logging.info(f"Skipping delete of {timestamp} from {bigquery_table_id}")
 
     insert_data_into_bigquery_table(table_id=bigquery_table_id, data=records_to_load_dicts)
 
@@ -78,6 +82,7 @@ def load(bucket: str, word_frequencies_key: str):
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 bigquery_table_id = os.environ.get("BIGQUERY_TABLE_ID", "")
+bigquery_delete_before_write = os.environ.get("BIGQUERY_DELETE_BEFORE_WRITE", "false").lower()
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 min_word_length = int(os.environ.get("MIN_WORD_LENGTH", "99"))
 min_frequency = int(os.environ.get("MIN_FREQUENCY", "99999"))
