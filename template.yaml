@@ -22,6 +22,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: NewsWatchBigQueryTableId
     Description: Newswatch table id in BigQuery
+  NewsWatchBigQueryDeleteBeforeWrite:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: NewsWatchBigQueryDeleteBeforeWrite
+    Description: Whether to delete possible duplicates in the table before loading data to ensure idempotency (true/false)
   ExtractS3Prefix:
     Type: String
     Default: headlines
@@ -35,7 +39,7 @@ Parameters:
 Mappings:
   EnvMapping:
     dev:
-      ExtractSchedule: cron(15 * * * ? *)
+      ExtractSchedule: cron(15 */6 * * ? *)
       LogLevel: DEBUG
     live:
       ExtractSchedule: cron(30 * * * ? *)
@@ -187,6 +191,7 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           BIGQUERY_TABLE_ID: !Sub "${NewsWatchBigQueryTableId}-${Env}"
+          BIGQUERY_DELETE_BEFORE_WRITE: !Ref NewsWatchBigQueryDeleteBeforeWrite
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
           MIN_WORD_LENGTH: 3
           MIN_FREQUENCY: 20
