@@ -1,6 +1,6 @@
 # 🗞️Newswatch🗞️
 
-Visualising the most frequent words in British newspaper headlines over time.
+Visualising words frequencies in British newspaper headlines over time.
 
 **[Link to the dashboard](https://lookerstudio.google.com/reporting/cace127d-4866-4fcf-ae4c-a3f861e52a92 "Looker Studio")**
 

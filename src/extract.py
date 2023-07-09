@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 import requests
 import yaml
@@ -7,10 +7,10 @@ from bs4 import BeautifulSoup
 
 from common.models import Filter, Site, SiteHeadlines
 from common.utils import (
-    get_current_timestamp,
     build_s3_key,
     coalesce_dict_values,
     convert_objects_to_json_string,
+    get_current_timestamp,
     upload_data_to_s3,
 )
 
@@ -82,6 +82,13 @@ def extract():
 # Lambda cold start
 
 
+if logging.getLogger().hasHandlers():
+    logging.getLogger().setLevel(logging.INFO)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger()
+
 request_headers = {
     "User-Agent": """Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) \
                             AppleWebKit/537.36 (KHTML, like Gecko) \
@@ -92,9 +99,6 @@ s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")
 sites_yaml_path = os.environ.get("SITES_YAML_PATH", "")
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=log_level)
 
 
 # Lambda handler

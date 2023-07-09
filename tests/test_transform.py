@@ -1,8 +1,11 @@
 import pytest
 
-from transform import count_words_in_text, get_site_word_frequencies_from_site_headlines, merge_site_word_frequencies
-
 from common.models import SiteHeadlines, SiteWordFrequencies, WordFrequencies
+from transform import (
+    count_words_in_text,
+    get_site_word_frequencies_from_site_headlines,
+    merge_site_word_frequencies,
+)
 
 
 @pytest.mark.parametrize(

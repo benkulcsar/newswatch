@@ -26,6 +26,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: NewsWatchBigQueryDeleteBeforeWrite
     Description: Whether to delete possible duplicates in the table before loading data to ensure idempotency (true/false)
+  NewsWatchMonitoringEmail:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: NewsWatchMonitoringEmail
+    Description: Email address where lambda error alerts are sent to
   ExtractS3Prefix:
     Type: String
     Default: headlines
@@ -120,6 +124,17 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt WordFrequenciesLandedEventRule.Arn
 
+  NewsWatchLambdaErrorsSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref NewsWatchMonitoringEmail
+          Protocol: email
+      Tags:
+        - Key: project
+          Value: !Ref ProjectTag
+      TopicName: !Sub newswatch-lambda-errors-${Env}
+
   ExtractFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -144,7 +159,7 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           EXTRACT_S3_PREFIX: !Ref ExtractS3Prefix
-          SITES_YAML_PATH: sites-with-filters.yaml
+          SITES_YAML_PATH: resources/sites-with-filters.yaml
           LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
       Tags:
         project: !Ref ProjectTag
@@ -195,7 +210,43 @@ Resources:
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
           MIN_WORD_LENGTH: 3
           MIN_FREQUENCY: 20
-          EXCLUDED_WORDS_TXT_PATH: excluded-words.txt
+          EXCLUDED_WORDS_TXT_PATH: resources/excluded-words.txt
           LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
+      Tags:
+        project: !Ref ProjectTag
+
+  NewswatchMonitoringFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      MemorySize: 128
+      FunctionName: !Sub newswatch-monitoring-sns-${Env}
+      Handler: monitoring.lambda_handler
+      CodeUri: src
+      Description: !Sub Newswatch Monitoring Function (${Env})
+      Architectures:
+      - x86_64
+      Tracing: Active
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NewsWatchLambdaErrorsSnsTopic.TopicName
+      Events:
+        ExtractErrorEvent:
+          Type: CloudWatchLogs
+          Properties:
+            LogGroupName: !Sub /aws/lambda/newswatch-extract-${Env}
+            FilterPattern: ERROR
+        TransformErrorEvent:
+          Type: CloudWatchLogs
+          Properties:
+            LogGroupName: !Sub /aws/lambda/newswatch-transform-${Env}
+            FilterPattern: ERROR
+        LoadErrorEvent:
+          Type: CloudWatchLogs
+          Properties:
+            LogGroupName: !Sub /aws/lambda/newswatch-load-${Env}
+            FilterPattern: ERROR
+      Environment:
+        Variables:
+          snsARN: !GetAtt NewsWatchLambdaErrorsSnsTopic.TopicArn
       Tags:
         project: !Ref ProjectTag

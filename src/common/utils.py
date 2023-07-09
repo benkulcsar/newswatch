@@ -1,12 +1,13 @@
-from datetime import datetime, timezone
 import json
-import boto3
-from collections.abc import Iterable
 from collections import Counter
-from typing import Protocol, Any, Optional, Union, Sequence
+from collections.abc import Iterable
+from datetime import datetime, timezone
+from typing import Any, Optional, Protocol, Sequence, Union
+
+import boto3
+from google.api_core.exceptions import BadRequest as GcpBadRequest
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from google.api_core.exceptions import BadRequest as GcpBadRequest
 
 
 class HasDict(Protocol):
