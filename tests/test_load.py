@@ -1,12 +1,9 @@
-import pytest
 from typing import Iterator
 
-from load import (
-    filter_word_frequencies,
-    generate_load_records,
-)
+import pytest
 
-from common.models import WordFrequencies, LoadRecord
+from common.models import LoadRecord, WordFrequencies
+from load import filter_word_frequencies, generate_load_records
 
 
 def test_load_excluded_words_from_txt():

@@ -1,22 +1,17 @@
-import os
 import logging
+import os
 from typing import Iterator
 
-from common.models import WordFrequencies, LoadRecord
-
+from common.models import LoadRecord, WordFrequencies
 from common.utils import (
-    get_datetime_from_s3_key,
-    download_data_from_s3,
-    convert_json_string_to_objects,
-    extract_s3_bucket_and_key_from_event,
-    delete_timestamp_from_bigquery,
-    insert_data_into_bigquery_table,
     DeleteFailedError,
+    convert_json_string_to_objects,
+    delete_timestamp_from_bigquery,
+    download_data_from_s3,
+    extract_s3_bucket_and_key_from_event,
+    get_datetime_from_s3_key,
+    insert_data_into_bigquery_table,
 )
-
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def load_excluded_words_from_txt(txt_path: str) -> set[str]:
@@ -80,6 +75,13 @@ def load(bucket: str, word_frequencies_key: str):
 # Lambda cold start
 
 
+if logging.getLogger().hasHandlers():
+    logging.getLogger().setLevel(logging.INFO)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger()
+
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 bigquery_table_id = os.environ.get("BIGQUERY_TABLE_ID", "")
 bigquery_delete_before_write = os.environ.get("BIGQUERY_DELETE_BEFORE_WRITE", "false").lower()
@@ -88,9 +90,6 @@ min_word_length = int(os.environ.get("MIN_WORD_LENGTH", "99"))
 min_frequency = int(os.environ.get("MIN_FREQUENCY", "99999"))
 excluded_words_txt_path = os.environ.get("EXCLUDED_WORDS_TXT_PATH", None)
 excluded_words = load_excluded_words_from_txt(excluded_words_txt_path) if excluded_words_txt_path else set()
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=log_level)
 
 
 # Lambda handler

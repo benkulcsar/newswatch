@@ -1,20 +1,17 @@
 import json
 from datetime import datetime, timezone
 from unittest.mock import patch
-from requests.models import Response
 
-import moto
 import boto3
-
+import moto
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
+from requests.models import Response
 
+from common.models import Filter, Site
 from extract import lambda_handler as extract_lambda_handler
-from transform import lambda_handler as transform_lambda_handler
 from load import lambda_handler as load_lambda_handler
-
-from common.models import Site, Filter
-
+from transform import lambda_handler as transform_lambda_handler
 
 # Global variables normally set by environment variables at lambda cold start
 

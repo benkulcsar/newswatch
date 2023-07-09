@@ -1,28 +1,23 @@
-import nltk
+import logging
 import os
 import re
-import logging
-
-from textblob import Word
 from collections import Counter
 
-from common.models import SiteHeadlines, SiteWordFrequencies, WordFrequencies
+import nltk
+from textblob import Word
 
+from common.models import SiteHeadlines, SiteWordFrequencies, WordFrequencies
 from common.utils import (
-    get_datetime_from_s3_key,
-    download_data_from_s3,
-    convert_json_string_to_objects,
-    sort_dict_by_value,
-    merge_dictionaries_summing_values,
     build_s3_key,
-    extract_s3_bucket_and_key_from_event,
+    convert_json_string_to_objects,
     convert_objects_to_json_string,
+    download_data_from_s3,
+    extract_s3_bucket_and_key_from_event,
+    get_datetime_from_s3_key,
+    merge_dictionaries_summing_values,
+    sort_dict_by_value,
     upload_data_to_s3,
 )
-
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def count_words_in_text(text: str) -> dict:
@@ -78,12 +73,16 @@ def transform(bucket: str, site_headline_list_key: str):
 # Lambda cold start
 
 
+if logging.getLogger().hasHandlers():
+    logging.getLogger().setLevel(logging.INFO)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger()
+
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=log_level)
 
 nltk.data.path.append("/tmp")
 nltk.download("wordnet", download_dir="/tmp")

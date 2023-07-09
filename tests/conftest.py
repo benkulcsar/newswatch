@@ -4,7 +4,14 @@ import pytest
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
 
-from common.models import Filter, Site, SiteHeadlines, SiteWordFrequencies, WordFrequencies, LoadRecord
+from common.models import (
+    Filter,
+    LoadRecord,
+    Site,
+    SiteHeadlines,
+    SiteWordFrequencies,
+    WordFrequencies,
+)
 
 
 @pytest.fixture

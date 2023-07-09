@@ -1,8 +1,13 @@
-import sys
 import sqlite3
-from common.models import SiteHeadlines
-from common.utils import build_s3_key, convert_objects_to_json_string, upload_data_to_s3
+import sys
 from datetime import datetime, timedelta
+
+from common.models import SiteHeadlines
+from common.utils import (
+    build_s3_key,
+    convert_objects_to_json_string,
+    upload_data_to_s3,
+)
 
 
 def iterate_dates(start_date, end_date):
