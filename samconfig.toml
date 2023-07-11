@@ -9,7 +9,6 @@ confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides=[
   "Env=live",
-  "LogLevel=INFO"
 ]
 
 
@@ -22,5 +21,4 @@ confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides=[
   "Env=dev",
-  "LogLevel=DEBUG"
 ]

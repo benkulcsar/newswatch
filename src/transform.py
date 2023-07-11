@@ -82,7 +82,6 @@ logger = logging.getLogger()
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
-log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 nltk.data.path.append("/tmp")
 nltk.download("wordnet", download_dir="/tmp")

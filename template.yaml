@@ -44,10 +44,8 @@ Mappings:
   EnvMapping:
     dev:
       ExtractSchedule: cron(15 */6 * * ? *)
-      LogLevel: DEBUG
     live:
       ExtractSchedule: cron(30 * * * ? *)
-      LogLevel: INFO
 
 Resources:
 
@@ -160,7 +158,6 @@ Resources:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           EXTRACT_S3_PREFIX: !Ref ExtractS3Prefix
           SITES_YAML_PATH: resources/sites-with-filters.yaml
-          LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
       Tags:
         project: !Ref ProjectTag
 
@@ -182,7 +179,6 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
-          LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
       Tags:
         project: !Ref ProjectTag
 
@@ -211,7 +207,6 @@ Resources:
           MIN_WORD_LENGTH: 3
           MIN_FREQUENCY: 20
           EXCLUDED_WORDS_TXT_PATH: resources/excluded-words.txt
-          LOG_LEVEL: !FindInMap [ EnvMapping, !Ref Env, LogLevel ]
       Tags:
         project: !Ref ProjectTag
 
