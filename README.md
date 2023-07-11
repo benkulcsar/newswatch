@@ -1,12 +1,16 @@
 # 🗞️Newswatch🗞️
+[![python](https://img.shields.io/badge/Python-3.10-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Visualising words frequencies in British newspaper headlines over time.
 
-**[Link to the dashboard](https://lookerstudio.google.com/reporting/cace127d-4866-4fcf-ae4c-a3f861e52a92 "Looker Studio")**
+**[Link to the dashboard](http://newswatch.live "Looker Studio")**
 
 # History
 
-This is a replacement of an old hobby project called Firedruid that became too expensive to maintain.
+This repository serves as a more cost-effective replacement for the discontinued hobby project, [Firedruid](http://www.firedruid.com).
 
 ## Newswatch (new)
 

@@ -98,7 +98,6 @@ request_headers = {
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")
 sites_yaml_path = os.environ.get("SITES_YAML_PATH", "")
-log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 
 # Lambda handler
