@@ -15,7 +15,6 @@ from transform import lambda_handler as transform_lambda_handler
 
 # Global variables normally set by environment variables at lambda cold start
 
-log_level = "INFO"
 s3_bucket_name = "test-bucket"
 extract_s3_prefix = "extracted-headlines"
 transform_s3_prefix = "word-frequencies"
@@ -151,7 +150,7 @@ mock_bigquery_client = MockBigQueryClient()
 @patch("load.min_word_length", min_word_length)
 @patch("load.min_frequency", min_frequency)
 @patch("load.excluded_words", excluded_words)
-@patch("common.utils._get_get_bq_client", return_value=mock_bigquery_client)
+@patch("common.utils._get_bq_client", return_value=mock_bigquery_client)
 def test_newswatch_e2e(*__args):
     # Setup
 

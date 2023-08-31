@@ -1,0 +1,67 @@
+- name: nyt
+  url: https://www.nytimes.com/
+  filters:
+    - tag: h3
+      attrs:
+        class: indicate-hover
+- name: cnn
+  url: https://edition.cnn.com/
+  filters:
+    - attrs:
+        data-editable: headline
+- name: fox
+  url: https://www.foxnews.com/
+  filters:
+    - attrs:
+        class: title
+- name: nypost
+  url: https://nypost.com/
+  filters:
+    - tag: h2
+    - tag: h3
+- name: yahoofinance
+  url: https://finance.yahoo.com/
+  filters:
+    - tag: h2
+    - tag: h3
+- name: bbccom
+  url: https://www.bbc.com/
+  filters:
+    - tag: h3
+- name: washingtonpost
+  url: https://www.washingtonpost.com/
+  filters:
+    - tag: h2
+- name: cnbc
+  url: https://www.cnbc.com/
+  filters:
+    - attrs:
+        class: RiverHeadline-headline
+    - attrs:
+        class: Card-title
+    - tag: h2
+- name: nbcnews
+  url: https://www.nbcnews.com/
+  filters:
+    - tag: h2
+    - tag: h3
+- name: cbsnews
+  url: https://www.cbsnews.com/
+  filters:
+    - tag: h4
+- name: wsj
+  url: https://www.wsj.com/
+  filters:
+    - tag: h3
+- name: abcnews
+  url: https://abcnews.go.com/
+  filters:
+    - attrs:
+        class: AnchorLink
+    - tag: h3
+    - tag: h4
+- name: apnews
+  url: https://apnews.com/
+  filters:
+    - attrs:
+        class: PagePromoContentIcons-text
