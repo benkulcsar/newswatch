@@ -78,7 +78,7 @@ def download_data_from_s3(bucket_name: str, key: str) -> str:
     return s3.get_object(Bucket=bucket_name, Key=key)["Body"].read().decode("utf-8")
 
 
-def _get_get_bq_client() -> bigquery.Client:
+def _get_bq_client() -> bigquery.Client:
     ssm = boto3.client("ssm")
     response = ssm.get_parameter(Name="NewsWatchBigQueryCredentials", WithDecryption=True)
     credentials_info = json.loads(response["Parameter"]["Value"], strict=False)
@@ -87,7 +87,7 @@ def _get_get_bq_client() -> bigquery.Client:
 
 
 def delete_timestamp_from_bigquery(table_id: str, timestamp: datetime) -> bigquery.table.RowIterator:
-    client = _get_get_bq_client()
+    client = _get_bq_client()
     query_delete = f"DELETE FROM `{table_id}` WHERE timestamp = '{timestamp}'"
     try:
         return client.query(query_delete).result()
@@ -96,5 +96,5 @@ def delete_timestamp_from_bigquery(table_id: str, timestamp: datetime) -> bigque
 
 
 def insert_data_into_bigquery_table(table_id: str, data: list[dict]) -> Sequence[dict]:
-    client = _get_get_bq_client()
+    client = _get_bq_client()
     return client.insert_rows_json(table_id, data)

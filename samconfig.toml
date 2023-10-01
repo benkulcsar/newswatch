@@ -1,6 +1,9 @@
 version = 0.1
 
-[live.deploy.parameters]
+
+# UK config
+
+[live-uk.deploy.parameters]
 stack_name = "newswatch-live"
 resolve_s3 = true
 s3_prefix = "newswatch-live"
@@ -8,11 +11,10 @@ region = "eu-west-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides=[
-  "Env=live",
+  "Env=live-uk",
 ]
 
-
-[dev.deploy.parameters]
+[dev-uk.deploy.parameters]
 stack_name = "newswatch-dev"
 resolve_s3 = true
 s3_prefix = "newswatch-dev"
@@ -20,5 +22,30 @@ region = "eu-west-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides=[
-  "Env=dev",
+  "Env=dev-uk",
+]
+
+
+# US config
+
+[live-us.deploy.parameters]
+stack_name = "newswatch-live-us"
+resolve_s3 = true
+s3_prefix = "newswatch-live"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides=[
+  "Env=live-us",
+]
+
+[dev-us.deploy.parameters]
+stack_name = "newswatch-dev-us"
+resolve_s3 = true
+s3_prefix = "newswatch-dev"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides=[
+  "Env=dev-us",
 ]

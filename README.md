@@ -4,28 +4,29 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Visualising words frequencies in British newspaper headlines over time.
+Visualising words frequencies in 🇬🇧 and 🇺🇸 newspaper headlines over time.
 
 **[Link to the dashboard](http://newswatch.live "Looker Studio")**
 
-# History
+# Summary
 
-This repository serves as a more cost-effective replacement for the discontinued hobby project, [Firedruid](http://www.firedruid.com).
+Newswatch is a more cost-effective replacement for the discontinued hobby project, Firedruid.
 
-## Newswatch (new)
+## Line Chart
 
-!["Line chart"](img/newswatch_lines.png?v=4&s=200 "Line chart")
-!["Treemap"](img/newswatch_treemap.png?v=4&s=200 "Treemap")
+!["Line chart"](img/line_chart_september_2023.png?v=4&s=200 "Line chart")
 
-## Firedruid (old)
-
-!["Firedruid"](img/firedruid.png?v=4&s=200 "Firedruid")
+## Treemap
+!["Treemap"](img/treemap_september_2023.png?v=4&s=200 "Treemap")
 
 ## Historical data
 
-Firedruid stored the scraped data in a local SQLite database file. This has been reprocessed and backfilled in the new dashboard from `2020-06-05`.
+Data is available:
+* from `2020-06-05` in the UK 🇬🇧 and
+* from `2023-09-01` in the US 🇺🇸
 
-!["Backfill"](img/newswatch_backfill.png?v=4&s=200 "Backfill")
+## Line Chart - UK History
+!["Backfill"](img/line_chart_historical.png?v=4&s=200 "Backfill")
 # Architecture
 
 High-level architecture diagram:
@@ -36,20 +37,12 @@ High-level architecture diagram:
 
 ## Manually running a lambda function
 
-`./src/scripts/run_lambda.sh <START DATE> <END DATE> <FUNCTION NAME> <S3 BUCKET> <S3 SOURCE PREFIX>`
+`./src/scripts/run_lambda.sh <START DATE> <END DATE> <REGION> <FUNCTION NAME> <S3 BUCKET> <S3 SOURCE PREFIX>`
 
-Example:
-
-```shell
-./src/scripts/run_lambda.sh "2023-06-10" "2023-06-20" "newswatch-load-live" "s3-example-newswatch-live" "word-frequencies"
-```
-
-## Backfilling from local SQLite file
-
-`./src/scripts/backfill_sqlite.sh <START DATE> <END DATE> <SQLITE PATH> <S3 BUCKET> <S3 PREFIX>`
-
-Example:
+Examples:
 
 ```shell
-./src/scripts/backfill_sqlite.sh "2020-06-05" "2020-08-31" "~/raw_data.db" "s3-example-newswatch-live" "headlines"
+./src/scripts/run_lambda.sh "2023-06-10" "2023-06-20" "eu-west-1" "newswatch-load-live-uk" "s3-example-newswatch-live" "word-frequencies"
+
+./src/scripts/run_lambda.sh "2023-08-10" "2023-08-20" "us-east-1" "newswatch-load-live-us" "s3-example-newswatch-live-us" "word-frequencies"
 ```

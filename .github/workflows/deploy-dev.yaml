@@ -10,8 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  deploy-dev:
+  deploy-dev-uk:
     uses: ./.github/workflows/deploy.yaml
     with:
-      target-env: dev
+      target-env: dev-uk
+    secrets: inherit
+  deploy-dev-us:
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      target-env: dev-us
     secrets: inherit

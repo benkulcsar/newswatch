@@ -12,8 +12,10 @@ Parameters:
   Env:
     Type: String
     AllowedValues:
-      - dev
-      - live
+      - dev-uk
+      - live-uk
+      - dev-us
+      - live-us
   NewsWatchS3BucketName:
     Type: AWS::SSM::Parameter::Value<String>
     Default: NewsWatchS3BucketName
@@ -42,17 +44,31 @@ Parameters:
 
 Mappings:
   EnvMapping:
-    dev:
+    dev-uk:
       ExtractSchedule: cron(15 */6 * * ? *)
-    live:
+      SitesYamlPath: resources/sites-with-filters-uk.yaml
+      BackwardsCompatibleSuffix: dev
+    live-uk:
       ExtractSchedule: cron(30 * * * ? *)
+      SitesYamlPath: resources/sites-with-filters-uk.yaml
+      BackwardsCompatibleSuffix: live
+    dev-us:
+      ExtractSchedule: cron(15 */6 * * ? *)
+      SitesYamlPath: resources/sites-with-filters-us.yaml
+      BackwardsCompatibleSuffix: dev-us
+    live-us:
+      ExtractSchedule: cron(30 * * * ? *)
+      SitesYamlPath: resources/sites-with-filters-us.yaml
+      BackwardsCompatibleSuffix: live-us
 
 Resources:
 
   NewswatchS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${NewsWatchS3BucketName}-${Env}"
+      BucketName: !Sub
+        - "${NewsWatchS3BucketName}-${Suffix}"
+        - Suffix: !FindInMap [ EnvMapping, !Ref Env, BackwardsCompatibleSuffix ]
       VersioningConfiguration:
         Status: Enabled
       NotificationConfiguration:
@@ -76,7 +92,9 @@ Resources:
         detail:
           bucket:
             name:
-              - !Sub "${NewsWatchS3BucketName}-${Env}"
+              - !Sub
+                - "${NewsWatchS3BucketName}-${Suffix}"
+                - Suffix: !FindInMap [ EnvMapping, !Ref Env, BackwardsCompatibleSuffix ]
           object:
             key:
               - prefix: !Ref ExtractS3Prefix
@@ -98,7 +116,9 @@ Resources:
         detail:
           bucket:
             name:
-              - !Sub "${NewsWatchS3BucketName}-${Env}"
+              - !Sub
+                - "${NewsWatchS3BucketName}-${Suffix}"
+                - Suffix: !FindInMap [ EnvMapping, !Ref Env, BackwardsCompatibleSuffix ]
           object:
             key:
               - prefix: !Ref TransformS3Prefix
@@ -157,7 +177,7 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           EXTRACT_S3_PREFIX: !Ref ExtractS3Prefix
-          SITES_YAML_PATH: resources/sites-with-filters.yaml
+          SITES_YAML_PATH: !FindInMap [ EnvMapping, !Ref Env, SitesYamlPath ]
       Tags:
         project: !Ref ProjectTag
 
@@ -201,7 +221,9 @@ Resources:
       Environment:
         Variables:
           S3_BUCKET_NAME: !Ref NewswatchS3Bucket
-          BIGQUERY_TABLE_ID: !Sub "${NewsWatchBigQueryTableId}-${Env}"
+          BIGQUERY_TABLE_ID: !Sub
+            - "${NewsWatchBigQueryTableId}-${Suffix}"
+            - Suffix: !FindInMap [ EnvMapping, !Ref Env, BackwardsCompatibleSuffix ]
           BIGQUERY_DELETE_BEFORE_WRITE: !Ref NewsWatchBigQueryDeleteBeforeWrite
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
           MIN_WORD_LENGTH: 3
@@ -224,6 +246,7 @@ Resources:
       Policies:
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt NewsWatchLambdaErrorsSnsTopic.TopicName
+      # TODO: The CloudWatch log groups won't exist until the functions are deployed, so this will fail
       Events:
         ExtractErrorEvent:
           Type: CloudWatchLogs
