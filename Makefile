@@ -23,9 +23,9 @@ deploy-dev-us: sv sb
 	sam deploy --config-env dev-us --no-fail-on-empty-changeset;
 
 deploy-live-uk: sv sb
-	sam deploy --config-env dev-uk --no-fail-on-empty-changeset;
+	sam deploy --config-env live-uk --no-fail-on-empty-changeset;
 
 deploy-live-us: sv sb
-	sam deploy --config-env dev-us --no-fail-on-empty-changeset;
+	sam deploy --config-env live-us --no-fail-on-empty-changeset;
 
 check: pc test sv

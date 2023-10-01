@@ -45,15 +45,15 @@ Parameters:
 Mappings:
   EnvMapping:
     dev-uk:
-      ExtractSchedule: cron(15 * * * ? *)
+      ExtractSchedule: cron(15 */6 * * ? *)
       SitesYamlPath: resources/sites-with-filters-uk.yaml
-      BackwardsCompatibleSuffix: dev  # not practical to change it to dev-uk as it would require changing the table id in BigQuery
+      BackwardsCompatibleSuffix: dev
     live-uk:
       ExtractSchedule: cron(30 * * * ? *)
       SitesYamlPath: resources/sites-with-filters-uk.yaml
-      BackwardsCompatibleSuffix: live  # not practical to change it to live-uk as it would require changing the table id in BigQuery
+      BackwardsCompatibleSuffix: live
     dev-us:
-      ExtractSchedule: cron(15 * * * ? *)
+      ExtractSchedule: cron(15 */6 * * ? *)
       SitesYamlPath: resources/sites-with-filters-us.yaml
       BackwardsCompatibleSuffix: dev-us
     live-us:

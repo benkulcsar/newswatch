@@ -2,9 +2,10 @@
 
 start_date=$(date -d "$1" +%s)
 end_date=$(date -d "$2" +%s)
-lambda_function_name=$3
-bucket_name=$4
-prefix=$5
+region=$3
+lambda_function_name=$4
+bucket_name=$5
+prefix=$6
 
 current_date=$start_date
 
@@ -20,6 +21,7 @@ while [[ $current_date -le $end_date ]]; do
         echo $key
 
         aws lambda invoke \
+            --region "${region}" \
             --function-name "$lambda_function_name" \
             --invocation-type Event \
             --payload "{\"detail\":{\"bucket\":{\"name\":\"${bucket_name}\"},\"object\":{\"key\":\"${key}\"}}}" \

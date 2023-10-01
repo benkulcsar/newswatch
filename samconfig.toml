@@ -29,7 +29,7 @@ parameter_overrides=[
 # US config
 
 [live-us.deploy.parameters]
-stack_name = "newswatch-dev-us"
+stack_name = "newswatch-live-us"
 resolve_s3 = true
 s3_prefix = "newswatch-live"
 region = "us-east-1"
