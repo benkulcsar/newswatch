@@ -4,13 +4,11 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Visualising words frequencies in 🇬🇧 and 🇺🇸 newspaper headlines over time.
-
-**[Link to the dashboard](http://newswatch.live "Looker Studio")**
+**[newswatch.live](http://newswatch.live "newswatch.live")** - real-time word frequency visualisation for 🇬🇧 and 🇺🇸 news
 
 # Summary
 
-Newswatch is a more cost-effective replacement for the discontinued hobby project, Firedruid.
+Newswatch collects data from leading UK and US news websites' front pages and creates visualisations to track word frequency changes over time, offering insights into current news trends and topics.
 
 ## Line Chart
 
@@ -21,12 +19,12 @@ Newswatch is a more cost-effective replacement for the discontinued hobby projec
 
 ## Historical data
 
-Data is available:
-* from `2020-06-05` in the UK 🇬🇧 and
-* from `2023-09-01` in the US 🇺🇸
+Data is available from:
+* `2020-06-05` in the UK 🇬🇧 and
+* `2023-09-01` in the US 🇺🇸
 
-## Line Chart - UK History
-!["Backfill"](img/line_chart_historical.png?v=4&s=200 "Backfill")
+### Line Chart - UK History
+!["Historical"](img/line_chart_historical.png?v=4&s=200 "Historical")
 # Architecture
 
 High-level architecture diagram:
@@ -37,12 +35,26 @@ High-level architecture diagram:
 
 ## Manually running a lambda function
 
-`./src/scripts/run_lambda.sh <START DATE> <END DATE> <REGION> <FUNCTION NAME> <S3 BUCKET> <S3 SOURCE PREFIX>`
+```shell
+./src/scripts/run_lambda.sh <start-date> <end-date> <region> <function-name> <s3-bucket> <s3-prefix>
+```
 
 Examples:
 
 ```shell
-./src/scripts/run_lambda.sh "2023-06-10" "2023-06-20" "eu-west-1" "newswatch-load-live-uk" "s3-example-newswatch-live" "word-frequencies"
+./src/scripts/run_lambda.sh \
+    "2023-06-10" \
+    "2023-06-20" \
+    "eu-west-1" \
+    "newswatch-load-live-uk" \
+    "s3-example-newswatch-live" \
+    "word-frequencies"
 
-./src/scripts/run_lambda.sh "2023-08-10" "2023-08-20" "us-east-1" "newswatch-load-live-us" "s3-example-newswatch-live-us" "word-frequencies"
+./src/scripts/run_lambda.sh \
+    "2023-09-01" \
+    "2023-09-02" \
+    "us-east-1" \
+    "newswatch-load-live-us" \
+    "s3-example-newswatch-live-us" \
+    "word-frequencies"
 ```
