@@ -7,7 +7,7 @@ from common.utils import (
     DeleteFailedError,
     convert_json_string_to_objects,
     delete_timestamp_from_bigquery,
-    download_data_from_s3,
+    get_from_s3,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
     insert_data_into_bigquery_table,
@@ -45,7 +45,7 @@ def generate_load_records(word_frequencies: WordFrequencies, timestamp_str: str)
 def load(bucket: str, word_frequencies_key: str):
     logger.info(f"Loading word frequencies from {bucket}/{word_frequencies_key}")
 
-    data: str = download_data_from_s3(bucket_name=bucket, key=word_frequencies_key)
+    data: str = get_from_s3(bucket_name=bucket, key=word_frequencies_key)
     word_frequencies: WordFrequencies = convert_json_string_to_objects(json_string=f"{data}", cls=WordFrequencies)[0]
     filtered_word_frequencies: WordFrequencies = filter_word_frequencies(word_frequencies=word_frequencies)
 
@@ -82,7 +82,6 @@ else:
 
 logger = logging.getLogger()
 
-s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 bigquery_table_id = os.environ.get("BIGQUERY_TABLE_ID", "")
 bigquery_delete_before_write = os.environ.get("BIGQUERY_DELETE_BEFORE_WRITE", "false").lower()
 min_word_length = int(os.environ.get("MIN_WORD_LENGTH", "99"))

@@ -11,13 +11,34 @@ from common.utils import (
     build_s3_key,
     convert_json_string_to_objects,
     convert_objects_to_json_string,
-    download_data_from_s3,
+    download_from_s3,
+    get_from_s3,
+    get_s3_object_age_days,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
     merge_dictionaries_summing_values,
     sort_dict_by_value,
-    upload_data_to_s3,
+    put_to_s3,
+    upload_to_s3,
 )
+
+
+def get_wordnet_corpus(bucket: str) -> None:
+    wordnet_file_path = f"{writable_path}/corpora/wordnet.zip"
+    wordnet_s3_key = "nltk/corpora/wordnet.zip"
+
+    wordnet_age_days = get_s3_object_age_days(bucket=bucket, key=wordnet_s3_key)
+    max_wordnet_age_days = 7
+
+    if wordnet_age_days < max_wordnet_age_days and wordnet_age_days != -1:
+        print("should")
+        download_from_s3(bucket=bucket, key=wordnet_s3_key, filename=wordnet_file_path)
+    else:
+        print("should not")
+        nltk.download("wordnet", download_dir=writable_path)
+        upload_to_s3(bucket=bucket, key=wordnet_s3_key, filename=f"{wordnet_file_path}")
+
+    nltk.data.path.append(writable_path)
 
 
 def count_words_in_text(text: str) -> dict:
@@ -45,9 +66,11 @@ def merge_site_word_frequencies(site_word_frequencies: list[SiteWordFrequencies]
 
 
 def transform(bucket: str, site_headline_list_key: str):
+    get_wordnet_corpus(bucket)
+
     logger.info(f"Transforming headlines from {bucket}/{site_headline_list_key}")
 
-    json_data: str = download_data_from_s3(bucket_name=bucket, key=site_headline_list_key)
+    json_data: str = get_from_s3(bucket_name=bucket, key=site_headline_list_key)
     site_headlines_list: list[SiteHeadlines] = convert_json_string_to_objects(json_string=json_data, cls=SiteHeadlines)
     site_word_frequencies: list[SiteWordFrequencies] = [
         get_site_word_frequencies_from_site_headlines(site_headlines) for site_headlines in site_headlines_list
@@ -60,7 +83,7 @@ def transform(bucket: str, site_headline_list_key: str):
         extension="json",
     )
 
-    s3_response = upload_data_to_s3(
+    s3_response = put_to_s3(
         bucket_name=bucket,
         key=object_key,
         data=convert_objects_to_json_string([word_frequencies]),
@@ -80,11 +103,8 @@ else:
 
 logger = logging.getLogger()
 
-s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
-
-nltk.data.path.append("/tmp")
-nltk.download("wordnet", download_dir="/tmp")
+writable_path = "/tmp"
 
 
 # Lambda handler

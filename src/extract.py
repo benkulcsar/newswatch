@@ -11,7 +11,7 @@ from common.utils import (
     coalesce_dict_values,
     convert_objects_to_json_string,
     get_current_timestamp,
-    upload_data_to_s3,
+    put_to_s3,
 )
 
 
@@ -69,7 +69,7 @@ def extract():
 
     object_key: str = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="json")
 
-    s3_response: dict = upload_data_to_s3(
+    s3_response: dict = put_to_s3(
         bucket_name=s3_bucket_name,
         key=object_key,
         data=convert_objects_to_json_string(site_headline_lists),
@@ -91,8 +91,8 @@ logger = logging.getLogger()
 
 request_headers = {
     "User-Agent": """Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) \
-                            AppleWebKit/537.36 (KHTML, like Gecko) \
-                            Chrome/50.0.2661.102 Safari/537.36""",
+                            AppleWebKit/603.1 (KHTML, like Gecko) \
+                            Chrome/117.0.0.0 Safari/537.36""",
 }
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")

@@ -1,11 +1,38 @@
 import pytest
+from unittest.mock import patch, ANY
 
 from common.models import SiteHeadlines, SiteWordFrequencies, WordFrequencies
 from transform import (
+    get_wordnet_corpus,
     count_words_in_text,
     get_site_word_frequencies_from_site_headlines,
     merge_site_word_frequencies,
 )
+
+
+@patch("transform.get_s3_object_age_days")
+@patch("transform.download_from_s3", return_value="downloaded from S3")
+@patch("transform.upload_to_s3", return_value="uploaded to S3")
+@patch("nltk.download", return_value="downloaded from NLTK")
+@patch("nltk.data.path")
+def test_get_wordnet_corpus(mock_nltk_path, mock_download_nltk, mock_upload_s3, mock_download_s3, mock_age_days):
+    test_bucket = "test_bucket"
+
+    # Wordnet corpus is less than 7 days old, cached version from S3 should be used
+    mock_age_days.return_value = 5
+    get_wordnet_corpus(bucket=test_bucket)
+
+    mock_age_days.assert_called_with(bucket=test_bucket, key=ANY)
+    mock_download_s3.assert_called_with(bucket=test_bucket, key=ANY, filename=ANY)
+    mock_upload_s3.assert_not_called()
+    mock_download_nltk.assert_not_called()
+
+    # Wordnet corpus is more than 7 days old, it should be downloaded from NLTK and cached in S3
+    mock_age_days.return_value = 9
+    get_wordnet_corpus(bucket=test_bucket)
+
+    mock_upload_s3.assert_called_with(bucket=test_bucket, key=ANY, filename=ANY)
+    mock_download_nltk.assert_called()
 
 
 @pytest.mark.parametrize(
