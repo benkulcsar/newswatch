@@ -49,7 +49,7 @@ Mappings:
       SitesYamlPath: resources/sites-with-filters-uk.yaml
       BackwardsCompatibleSuffix: dev
     live-uk:
-      ExtractSchedule: cron(30 * * * ? *)
+      ExtractSchedule: cron(5 * * * ? *)
       SitesYamlPath: resources/sites-with-filters-uk.yaml
       BackwardsCompatibleSuffix: live
     dev-us:
@@ -57,7 +57,7 @@ Mappings:
       SitesYamlPath: resources/sites-with-filters-us.yaml
       BackwardsCompatibleSuffix: dev-us
     live-us:
-      ExtractSchedule: cron(30 * * * ? *)
+      ExtractSchedule: cron(5 * * * ? *)
       SitesYamlPath: resources/sites-with-filters-us.yaml
       BackwardsCompatibleSuffix: live-us
 
@@ -197,7 +197,6 @@ Resources:
           BucketName: !Ref NewswatchS3Bucket
       Environment:
         Variables:
-          S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
       Tags:
         project: !Ref ProjectTag
@@ -220,7 +219,6 @@ Resources:
             ParameterName: NewsWatchBigQueryCredentials
       Environment:
         Variables:
-          S3_BUCKET_NAME: !Ref NewswatchS3Bucket
           BIGQUERY_TABLE_ID: !Sub
             - "${NewsWatchBigQueryTableId}-${Suffix}"
             - Suffix: !FindInMap [ EnvMapping, !Ref Env, BackwardsCompatibleSuffix ]

@@ -1,3 +1,4 @@
+import os
 import json
 from collections import Counter
 from collections.abc import Iterable
@@ -68,14 +69,37 @@ def extract_s3_bucket_and_key_from_event(event: dict) -> tuple[str, str]:
     return event["detail"]["bucket"]["name"], event["detail"]["object"]["key"]
 
 
-def upload_data_to_s3(bucket_name: str, key: str, data: str) -> dict:
+def put_to_s3(bucket_name: str, key: str, data: str) -> dict:
     s3 = boto3.client("s3")
     return s3.put_object(Bucket=bucket_name, Key=key, Body=data)
 
 
-def download_data_from_s3(bucket_name: str, key: str) -> str:
+def get_from_s3(bucket_name: str, key: str) -> str:
     s3 = boto3.client("s3")
     return s3.get_object(Bucket=bucket_name, Key=key)["Body"].read().decode("utf-8")
+
+
+def get_s3_object_age_days(bucket: str, key: str) -> int:
+    s3 = boto3.client("s3")
+    try:
+        response = s3.head_object(Bucket=bucket, Key=key)
+    except s3.exceptions.ClientError:
+        return -1
+    file_upload_time = response["LastModified"].replace(tzinfo=None)
+    return (datetime.now() - file_upload_time).days
+
+
+def download_from_s3(bucket: str, key: str, filename: str) -> None:
+    s3 = boto3.client("s3")
+    path = os.path.dirname(filename)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    s3.download_file(Bucket=bucket, Key=key, Filename=filename)
+
+
+def upload_to_s3(bucket: str, key: str, filename: str) -> None:
+    s3 = boto3.client("s3")
+    s3.upload_file(Filename=filename, Bucket=bucket, Key=key)
 
 
 def _get_bq_client() -> bigquery.Client:

@@ -18,6 +18,7 @@ from transform import lambda_handler as transform_lambda_handler
 s3_bucket_name = "test-bucket"
 extract_s3_prefix = "extracted-headlines"
 transform_s3_prefix = "word-frequencies"
+transform_writable_path = "./tmp"
 bigquery_table = "nwproject.nwdataset.nwtable"
 bigquery_delete_before_write = "true"
 min_word_length = 3
@@ -145,6 +146,7 @@ mock_bigquery_client = MockBigQueryClient()
 @patch("extract.extract_s3_prefix", extract_s3_prefix)
 @patch("extract.get_current_timestamp", return_value=timestamp)
 @patch("transform.transform_s3_prefix", transform_s3_prefix)
+@patch("transform.writable_path", transform_writable_path)
 @patch("load.bigquery_table_id", bigquery_table)
 @patch("load.bigquery_delete_before_write", bigquery_delete_before_write)
 @patch("load.min_word_length", min_word_length)
