@@ -4,18 +4,22 @@ import json
 import boto3
 import moto
 import pytest
+from pyfakefs.fake_filesystem_unittest import Patcher as FSPatcher
 
 
 from common.utils import (
     build_s3_key,
     coalesce_dict_values,
     convert_objects_to_json_string,
+    download_from_s3,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
     get_from_s3,
+    get_s3_object_age_days,
     merge_dictionaries_summing_values,
     sort_dict_by_value,
     put_to_s3,
+    upload_to_s3,
 )
 
 
@@ -114,7 +118,7 @@ def test_extract_s3_bucket_and_key_from_event():
     assert extract_s3_bucket_and_key_from_event(test_event) == (expected_bucket, expected_key)
 
 
-# TODO: Test S3 operations
+# TODO: Can repeated code be refactored into a fixture?
 
 
 @moto.mock_s3
@@ -137,3 +141,41 @@ def test_get_from_s3():
     s3_client.put_object(Bucket=test_bucket, Key=test_key, Body=test_data)
 
     assert get_from_s3(bucket_name=test_bucket, key=test_key) == test_data
+
+
+@moto.mock_s3
+def test_get_s3_object_age_days():
+    test_bucket, test_key, test_data = "test-bucket", "test-object-key", '{"test": "test"}'
+    s3_client = boto3.client("s3", region_name="us-east-1")
+    s3_client.create_bucket(Bucket=test_bucket)
+    s3_client.put_object(Bucket=test_bucket, Key=test_key, Body=test_data)
+
+    assert get_s3_object_age_days(bucket=test_bucket, key=test_key) == 0
+
+
+@moto.mock_s3
+def test_download_from_s3():
+    test_bucket, test_key, test_file, test_data = "test-bucket", "test-object-key", "a/b/test.txt", '{"test": "test"}'
+    s3_client = boto3.client("s3", region_name="us-east-1")
+    s3_client.create_bucket(Bucket=test_bucket)
+    s3_client.put_object(Bucket=test_bucket, Key=test_key, Body=test_data)
+
+    with FSPatcher() as patcher:
+        download_from_s3(bucket=test_bucket, key=test_key, filename=test_file)
+        assert patcher.fs.get_object(test_file).contents == test_data
+
+
+@moto.mock_s3
+def test_upload_to_s3():
+    test_bucket, test_key, test_file, test_data = "test-bucket", "test-object-key", "a/b/test.txt", '{"test": "test"}'
+    s3_client = boto3.client("s3", region_name="us-east-1")
+    s3_client.create_bucket(Bucket=test_bucket)
+
+    with FSPatcher() as patcher:
+        patcher.fs.create_file(test_file, contents=test_data)
+        upload_to_s3(bucket="test-bucket", key=test_key, filename=test_file)
+
+    response = s3_client.get_object(Bucket=test_bucket, Key=test_key)
+
+    assert response["ResponseMetadata"]["HTTPStatusCode"] == 200
+    assert s3_client.get_object(Bucket=test_bucket, Key=test_key)["Body"].read().decode("utf-8") == test_data

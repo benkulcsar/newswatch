@@ -3,4 +3,5 @@ flake8~=6.0.0
 moto[s3]~=4.1.9
 mypy~=1.2.0
 pre-commit~=3.2.2
+pyfakefs~=5.3.0
 pytest~=7.3.1
