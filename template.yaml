@@ -198,6 +198,7 @@ Resources:
       Environment:
         Variables:
           TRANSFORM_S3_PREFIX: !Ref TransformS3Prefix
+          TRANSFORM_WORD_COUNT_THRESHOLD: 100
       Tags:
         project: !Ref ProjectTag
 

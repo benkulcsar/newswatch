@@ -31,10 +31,8 @@ def get_wordnet_corpus(bucket: str) -> None:
     max_wordnet_age_days = 7
 
     if wordnet_age_days < max_wordnet_age_days and wordnet_age_days != -1:
-        print("should")
         download_from_s3(bucket=bucket, key=wordnet_s3_key, filename=wordnet_file_path)
     else:
-        print("should not")
         nltk.download("wordnet", download_dir=writable_path)
         upload_to_s3(bucket=bucket, key=wordnet_s3_key, filename=f"{wordnet_file_path}")
 
@@ -57,9 +55,17 @@ def get_site_word_frequencies_from_site_headlines(site_headlines: SiteHeadlines)
     )
 
 
-def merge_site_word_frequencies(site_word_frequencies: list[SiteWordFrequencies]) -> WordFrequencies:
-    site_count = len(site_word_frequencies)
-    summed_frequencies = merge_dictionaries_summing_values(*[site.frequencies for site in site_word_frequencies])
+def merge_site_word_frequencies(
+    site_word_frequencies: list[SiteWordFrequencies],
+    word_count_threshold: int = 0,
+) -> WordFrequencies:
+    site_word_frequencies_filtered = [
+        swf for swf in site_word_frequencies if len(swf.frequencies) > word_count_threshold
+    ]
+    site_count = len(site_word_frequencies_filtered)
+    summed_frequencies = merge_dictionaries_summing_values(
+        *[site.frequencies for site in site_word_frequencies_filtered],
+    )
     return WordFrequencies(
         frequencies=sort_dict_by_value({word: count / site_count for word, count in summed_frequencies.items()}),
     )
@@ -75,7 +81,7 @@ def transform(bucket: str, site_headline_list_key: str):
     site_word_frequencies: list[SiteWordFrequencies] = [
         get_site_word_frequencies_from_site_headlines(site_headlines) for site_headlines in site_headlines_list
     ]
-    word_frequencies = merge_site_word_frequencies(site_word_frequencies)
+    word_frequencies = merge_site_word_frequencies(site_word_frequencies, word_count_threshold)
 
     object_key = build_s3_key(
         prefix=transform_s3_prefix,
@@ -104,6 +110,7 @@ else:
 logger = logging.getLogger()
 
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
+word_count_threshold = int(os.environ.get("TRANSFORM_WORD_COUNT_THRESHOLD", "0"))
 writable_path = "/tmp"
 
 

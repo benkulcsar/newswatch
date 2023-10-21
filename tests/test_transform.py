@@ -83,5 +83,6 @@ def test_merge_site_word_frequencies(
     test_word_frequencies: WordFrequencies,
 ) -> None:
     assert (
-        merge_site_word_frequencies(test_site_word_frequencies_collection) == test_word_frequencies
+        merge_site_word_frequencies(test_site_word_frequencies_collection, word_count_threshold=0)
+        == test_word_frequencies
     ), f"Merging site word frequencies failed for site word frequencies: {test_site_word_frequencies_collection}"
