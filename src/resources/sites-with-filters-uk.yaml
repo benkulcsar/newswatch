@@ -46,9 +46,7 @@
   url: https://www.standard.co.uk/
   filters:
     - tag: h2
-    - tag: div
-      attrs:
-        class: headline
+    - tag: p
 - name: star
   url: https://www.dailystar.co.uk/
   filters:
