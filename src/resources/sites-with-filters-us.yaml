@@ -28,10 +28,10 @@
   url: https://www.bbc.com/
   filters:
     - tag: h3
-- name: washingtonpost
-  url: https://www.washingtonpost.com/
-  filters:
-    - tag: h2
+# - name: washingtonpost
+#   url: https://www.washingtonpost.com/
+#   filters:
+#     - tag: h2
 - name: cnbc
   url: https://www.cnbc.com/
   filters:

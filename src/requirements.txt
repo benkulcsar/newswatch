@@ -1,8 +1,8 @@
-beautifulsoup4~=4.12.2
-boto3~=1.26.130
-requests~=2.31.0
+beautifulsoup4~=4.12.3
+boto3~=1.34.162
+requests~=2.32.3
 PyYAML~=6.0
 pydantic~=1.10.7
 textblob~=0.17.1
 nltk~=3.8.1
-google-cloud-bigquery~=3.11.2
+google-cloud-bigquery~=3.25.0
