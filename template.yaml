@@ -156,6 +156,7 @@ Resources:
   ExtractFunction:
     Type: AWS::Serverless::Function
     Properties:
+      MemorySize: 192
       FunctionName: !Sub newswatch-extract-${Env}
       Handler: extract.lambda_handler
       CodeUri: src
