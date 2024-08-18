@@ -3,7 +3,8 @@ import json
 from collections import Counter
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Any, Optional, Protocol, Sequence, Union
+import logging
+from typing import Any, Callable, Optional, Protocol, Sequence, Union
 
 import boto3
 from google.api_core.exceptions import BadRequest as GcpBadRequest
@@ -122,3 +123,20 @@ def delete_timestamp_from_bigquery(table_id: str, timestamp: datetime) -> bigque
 def insert_data_into_bigquery_table(table_id: str, data: list[dict]) -> Sequence[dict]:
     client = _get_bq_client()
     return client.insert_rows_json(table_id, data)
+
+
+def get_logger() -> logging.Logger:
+    if logging.getLogger().hasHandlers():
+        logging.getLogger().setLevel(logging.INFO)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    return logging.getLogger()
+
+
+def call_and_catch_error_with_logging(func: Callable, *args, **kwargs) -> Any:
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        error_msg = f"Error in {func.__name__}: {e}"
+        get_logger().error(error_msg)

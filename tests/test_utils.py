@@ -9,12 +9,14 @@ from pyfakefs.fake_filesystem_unittest import Patcher as FSPatcher
 
 from common.utils import (
     build_s3_key,
+    call_and_catch_error_with_logging,
     coalesce_dict_values,
     convert_objects_to_json_string,
     download_from_s3,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
     get_from_s3,
+    get_logger,
     get_s3_object_age_days,
     merge_dictionaries_summing_values,
     sort_dict_by_value,
@@ -116,6 +118,25 @@ def test_extract_s3_bucket_and_key_from_event():
     )
     expected_bucket, expected_key = "test-bucket", "prefix/test-key"
     assert extract_s3_bucket_and_key_from_event(test_event) == (expected_bucket, expected_key)
+
+
+def test_call_and_catch_error_with_logging(caplog):
+    def div(a, b):
+        return a / b
+
+    assert call_and_catch_error_with_logging(div, 6, 2) == 3
+    assert "ERROR" not in caplog.text.upper()
+
+    assert call_and_catch_error_with_logging(div, 5, 0) is None
+    assert "ERROR" in caplog.text.upper()
+
+
+def test_get_logger(caplog):
+    logger = get_logger()
+    assert caplog.text == ""
+
+    logger.info("hey")
+    assert all(word in caplog.text for word in ["INFO", "hey"])
 
 
 # TODO: Can repeated code be refactored into a fixture?

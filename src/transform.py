@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from collections import Counter
@@ -13,6 +12,7 @@ from common.utils import (
     convert_objects_to_json_string,
     download_from_s3,
     get_from_s3,
+    get_logger,
     get_s3_object_age_days,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
@@ -102,12 +102,7 @@ def transform(bucket: str, site_headline_list_key: str):
 # Lambda cold start
 
 
-if logging.getLogger().hasHandlers():
-    logging.getLogger().setLevel(logging.INFO)
-else:
-    logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger()
+logger = get_logger()
 
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
 word_count_threshold = int(os.environ.get("TRANSFORM_WORD_COUNT_THRESHOLD", "0"))

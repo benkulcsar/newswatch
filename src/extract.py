@@ -1,4 +1,3 @@
-import logging
 import os
 
 import requests
@@ -8,9 +7,11 @@ from bs4 import BeautifulSoup
 from common.models import Filter, Site, SiteHeadlines
 from common.utils import (
     build_s3_key,
+    call_and_catch_error_with_logging,
     coalesce_dict_values,
     convert_objects_to_json_string,
     get_current_timestamp,
+    get_logger,
     put_to_s3,
 )
 
@@ -22,7 +23,7 @@ def load_sites_from_yaml(yaml_path: str) -> list[Site]:
 
 
 def scrape_url(url: str) -> BeautifulSoup:
-    page = requests.get(url=url, headers=request_headers)
+    page = requests.get(url=url, headers=REQUEST_HEADERS, timeout=REQUEST_GET_TIMEOUT_SEC)
     return BeautifulSoup(markup=page.content, features="html.parser")
 
 
@@ -55,7 +56,11 @@ def extract_headlines(site: Site) -> SiteHeadlines:
 
 def get_site_headline_lists(sites: list[Site]) -> list[SiteHeadlines]:
     logger.info(f"Sites to be scraped: {[site.name for site in sites]}")
-    return [extract_headlines(site) for site in sites]
+    return [
+        extracted_headlines
+        for site in sites
+        if (extracted_headlines := call_and_catch_error_with_logging(extract_headlines, site)) is not None
+    ]
 
 
 def extract():
@@ -83,14 +88,10 @@ def extract():
 # Lambda cold start
 
 
-if logging.getLogger().hasHandlers():
-    logging.getLogger().setLevel(logging.INFO)
-else:
-    logging.basicConfig(level=logging.INFO)
+logger = get_logger()
 
-logger = logging.getLogger()
-
-request_headers = {
+REQUEST_GET_TIMEOUT_SEC = 10
+REQUEST_HEADERS = {
     "User-Agent": """Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
                             AppleWebKit/537.36 (KHTML, like Gecko) \
                             Chrome/127.0.0.0 Safari/537.36""",

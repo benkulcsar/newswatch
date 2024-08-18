@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Iterator
 
@@ -8,6 +7,7 @@ from common.utils import (
     convert_json_string_to_objects,
     delete_timestamp_from_bigquery,
     get_from_s3,
+    get_logger,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
     insert_data_into_bigquery_table,
@@ -60,14 +60,14 @@ def load(bucket: str, word_frequencies_key: str):
     records_to_load_dicts: list[dict] = [dict(lr) for lr in records_to_load]
 
     if bigquery_delete_before_write == "true":
-        logging.info(f"Attempting to delete: {timestamp} from {bigquery_table_id}")
+        logger.info(f"Attempting to delete: {timestamp} from {bigquery_table_id}")
         try:
             delete_timestamp_from_bigquery(table_id=bigquery_table_id, timestamp=timestamp)
         except DeleteFailedError as e:
-            logging.error(f"Failed to delete {timestamp} from {bigquery_table_id}. Insert may not be idempotent.")
-            logging.error(f"Reason: {e.errors}")
+            logger.error(f"Failed to delete {timestamp} from {bigquery_table_id}. Insert may not be idempotent.")
+            logger.error(f"Reason: {e.errors}")
     else:
-        logging.info(f"Skipping delete of {timestamp} from {bigquery_table_id}")
+        logger.info(f"Skipping delete of {timestamp} from {bigquery_table_id}")
 
     insert_data_into_bigquery_table(table_id=bigquery_table_id, data=records_to_load_dicts)
 
@@ -75,12 +75,7 @@ def load(bucket: str, word_frequencies_key: str):
 # Lambda cold start
 
 
-if logging.getLogger().hasHandlers():
-    logging.getLogger().setLevel(logging.INFO)
-else:
-    logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger()
+logger = get_logger()
 
 bigquery_table_id = os.environ.get("BIGQUERY_TABLE_ID", "")
 bigquery_delete_before_write = os.environ.get("BIGQUERY_DELETE_BEFORE_WRITE", "false").lower()
