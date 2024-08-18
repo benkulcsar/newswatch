@@ -42,6 +42,7 @@ def extract_headline(bs: BeautifulSoup, filters: list[Filter]) -> list[str]:
 
 
 def extract_headlines(site: Site) -> SiteHeadlines:
+    logger.info(f"Site to be scraped: {site.name}")
     return SiteHeadlines(
         name=site.name,
         timestamp=get_current_timestamp(),
@@ -90,9 +91,9 @@ else:
 logger = logging.getLogger()
 
 request_headers = {
-    "User-Agent": """Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) \
-                            AppleWebKit/603.1 (KHTML, like Gecko) \
-                            Chrome/117.0.0.0 Safari/537.36""",
+    "User-Agent": """Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
+                            AppleWebKit/537.36 (KHTML, like Gecko) \
+                            Chrome/127.0.0.0 Safari/537.36""",
 }
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")

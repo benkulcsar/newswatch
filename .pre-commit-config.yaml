@@ -30,4 +30,4 @@ repos:
     hooks:
       - id: mypy
         args: [--check-untyped-defs]
-        additional_dependencies: [ types-all ]
+        additional_dependencies: [ types-requests, types-PyYAML ]
