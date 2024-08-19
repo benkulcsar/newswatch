@@ -64,7 +64,7 @@ WHEN NOT MATCHED THEN
 
 # Runbook
 
-## Manually running a lambda function
+## Manually executing lambda functions for backfilling
 
 ```shell
 ./src/scripts/run_lambda.sh <start-date> <end-date> <region> <function-name> <s3-bucket> <s3-prefix>
@@ -88,4 +88,16 @@ Examples:
     "newswatch-load-live-us" \
     "s3-example-newswatch-live-us" \
     "word-frequencies"
+```
+
+## Execute and debug extractions locally
+
+Local execution with debugging is only implemented for extraction because this is the only stage that can't be "backfilled", so bugs have to be fixed as soon as possible.
+
+```shell
+export SITES_YAML_PATH="src/resources/sites-with-filters-uk.yaml"
+# or
+export SITES_YAML_PATH="src/resources/sites-with-filters-us.yaml
+
+python ./src/extract.py
 ```

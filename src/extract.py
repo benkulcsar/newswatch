@@ -1,4 +1,5 @@
 import os
+import sys
 
 import requests
 import yaml
@@ -59,7 +60,8 @@ def get_site_headline_lists(sites: list[Site]) -> list[SiteHeadlines]:
     return [
         extracted_headlines
         for site in sites
-        if (extracted_headlines := call_and_catch_error_with_logging(extract_headlines, site)) is not None
+        if (extracted_headlines := call_and_catch_error_with_logging(func=extract_headlines, logger=logger, site=site))
+        is not None
     ]
 
 
@@ -74,15 +76,20 @@ def extract():
     )
 
     object_key: str = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="json")
+    site_headline_lists_json = convert_objects_to_json_string(site_headline_lists)
 
-    s3_response: dict = put_to_s3(
-        bucket_name=s3_bucket_name,
-        key=object_key,
-        data=convert_objects_to_json_string(site_headline_lists),
-    )
+    if is_local and not is_pytest:
+        breakpoint()
 
-    if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
-        logger.info(f"Uploaded headlines to S3: {s3_bucket_name}/{object_key}")
+    else:
+        s3_response: dict = put_to_s3(
+            bucket_name=s3_bucket_name,
+            key=object_key,
+            data=site_headline_lists_json,
+        )
+
+        if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
+            logger.info(f"Uploaded headlines to S3: {s3_bucket_name}/{object_key}")
 
 
 # Lambda cold start
@@ -101,9 +108,15 @@ s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")
 sites_yaml_path = os.environ.get("SITES_YAML_PATH", "")
 
+is_local = os.environ.get("AWS_EXECUTION_ENV") is None
+is_pytest = "pytest" in sys.modules
 
 # Lambda handler
 
 
 def lambda_handler(event, context):
+    extract()
+
+
+if is_local and not is_pytest and __name__ == "__main__":
     extract()
