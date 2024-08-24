@@ -30,29 +30,19 @@ def coalesce_dict_values(dct: Optional[dict], to: Any) -> Optional[dict]:
 
 
 def merge_dictionaries_summing_values(*dicts: dict[Any, Union[int, float]]) -> dict:
-    merged_dict: Counter = Counter()
-
-    for d in dicts:
-        merged_dict += Counter(d)
-
-    return dict(merged_dict)
+    return dict(sum((Counter(d) for d in dicts), Counter()))
 
 
 def convert_objects_to_json_string(object_collection: Iterable[HasDict]) -> str:
     return json.dumps([obj.__dict__ for obj in object_collection], default=str)
 
 
-def convert_json_string_to_objects(json_string: str, cls: type) -> list:
+def convert_json_string_to_objects(json_string: str, cls: type[HasDict]) -> list[HasDict]:
     return [cls(**obj) for obj in json.loads(json_string)]
 
 
 def build_s3_key(prefix: str, timestamp: datetime, extension: str) -> str:
-    return (
-        f"{prefix}/year={timestamp.year}"
-        f"/month={timestamp.month:02}"
-        f"/day={timestamp.day:02}"
-        f"/hour={timestamp.hour:02}.{extension}"
-    )
+    return f"{prefix}/{timestamp.strftime('year=%Y/month=%m/day=%d/hour=%H')}.{extension}"
 
 
 def get_datetime_from_s3_key(s3_key: str) -> datetime:
@@ -134,9 +124,9 @@ def get_logger() -> logging.Logger:
     return logging.getLogger()
 
 
-def call_and_catch_error_with_logging(func: Callable, *args, **kwargs) -> Any:
+def call_and_catch_error_with_logging(func: Callable, logger: logging.Logger, **kwargs) -> Any:
     try:
-        return func(*args, **kwargs)
+        return func(**kwargs)
     except Exception as e:
         error_msg = f"Error in {func.__name__}: {e}"
-        get_logger().error(error_msg)
+        logger.error(error_msg)
