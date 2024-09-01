@@ -29,3 +29,15 @@ deploy-live-us: sv sb
 	sam deploy --config-env live-us --no-fail-on-empty-changeset;
 
 check: pc test sv
+
+tf-init-dev:
+	terraform -chdir="./terraform" init -reconfigure -backend-config="./backend/backend-dev.tfvars"
+
+tf-init-live:
+	terraform -chdir="./terraform" init -reconfigure -backend-config="./backend/backend-live.tfvars"
+
+tf-plan-dev:
+	terraform -chdir="./terraform" plan -var-file="./vars/dev.tfvars"
+
+tf-plan-live:
+	terraform -chdir="./terraform" plan -var-file="./vars/live.tfvars"
