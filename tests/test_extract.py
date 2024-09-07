@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from requests.models import Response
 
 from common.models import Filter, Site
-from extract import extract_headline, load_sites_from_yaml, scrape_url
+from extract import extract_headline, load_sites_from_yaml, scrape_url, REQUEST_HEADERS, REQUEST_GET_TIMEOUT_SEC
 
 
 def test_load_sites_from_yaml(test_sites: list[Site]) -> None:
@@ -29,9 +29,10 @@ def test_scrape_url(mock_get) -> None:
     test_url = "http://test123abcxyz.io"
     mock_response = Response()
     mock_response._content = b"<html><body><h2>Super Simple Site</h2></body></html>"
-
     mock_get.return_value = mock_response
     parsed_html: BeautifulSoup = scrape_url(url=test_url)
+
+    mock_get.assert_called_with(url=test_url, headers=REQUEST_HEADERS, timeout=REQUEST_GET_TIMEOUT_SEC)
     assert parsed_html == BeautifulSoup(mock_response.content, "html.parser"), "Parsed HTML does not match expected"
 
 

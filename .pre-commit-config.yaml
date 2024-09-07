@@ -31,3 +31,8 @@ repos:
       - id: mypy
         args: [--check-untyped-defs]
         additional_dependencies: [ types-requests, types-PyYAML ]
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: "v1.94.1"
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
