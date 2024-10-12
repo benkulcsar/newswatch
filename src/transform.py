@@ -27,23 +27,27 @@ def get_wordnet_corpus(bucket: str) -> None:
     wordnet_file_path = f"{writable_path}/corpora/wordnet.zip"
     wordnet_s3_key = "nltk/corpora/wordnet.zip"
 
-    wordnet_age_days = get_s3_object_age_days(bucket=bucket, key=wordnet_s3_key)
+    wordnet_age_days: int | None = get_s3_object_age_days(bucket=bucket, key=wordnet_s3_key)
     max_wordnet_age_days = 7
 
-    if wordnet_age_days < max_wordnet_age_days and wordnet_age_days != -1:
-        download_from_s3(bucket=bucket, key=wordnet_s3_key, filename=wordnet_file_path)
-    else:
+    if wordnet_age_days is None or wordnet_age_days > max_wordnet_age_days:
         nltk.download("wordnet", download_dir=writable_path)
         upload_to_s3(bucket=bucket, key=wordnet_s3_key, filename=f"{wordnet_file_path}")
+    else:
+        download_from_s3(bucket=bucket, key=wordnet_s3_key, filename=wordnet_file_path)
 
     nltk.data.path.append(writable_path)
 
 
 def count_words_in_text(text: str) -> dict:
-    title_words = re.sub(r"\W+", " ", text.lower())
-    title_words_lemmatised = [Word(title_word).lemmatize() for title_word in title_words.split()]
+    def _clean_text(text: str) -> str:
+        """Convert text to lowercase and replace non-word characters with spaces."""
+        return re.sub(r"\W+", " ", text.lower())
 
-    return dict(Counter(title_words_lemmatised))
+    headline_words = _clean_text(text).split()
+    lemmatised_headline_words = [Word(headline_word).lemmatize() for headline_word in headline_words]
+
+    return dict(Counter(lemmatised_headline_words))
 
 
 def get_site_word_frequencies_from_site_headlines(site_headlines: SiteHeadlines) -> SiteWordFrequencies:
@@ -71,7 +75,7 @@ def merge_site_word_frequencies(
     )
 
 
-def transform(bucket: str, site_headline_list_key: str):
+def transform(bucket: str, site_headline_list_key: str) -> None:
     get_wordnet_corpus(bucket)
 
     logger.info(f"Transforming headlines from {bucket}/{site_headline_list_key}")
@@ -106,6 +110,7 @@ logger = get_logger()
 
 transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
 word_count_threshold = int(os.environ.get("TRANSFORM_WORD_COUNT_THRESHOLD", "0"))
+
 writable_path = "/tmp"
 
 

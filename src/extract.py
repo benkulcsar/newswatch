@@ -29,22 +29,19 @@ def scrape_url(url: str) -> BeautifulSoup:
 
 
 def extract_headline(bs: BeautifulSoup, filters: list[Filter]) -> list[str]:
-    return sorted(
-        list(
-            {
-                element.text
-                for filter in filters
-                for element in bs.find_all(
-                    name=filter.tag,
-                    attrs=coalesce_dict_values(filter.attrs, True),
-                )
-            },
-        ),
-    )
+    headlines: set[str] = {
+        element.text
+        for filter in filters
+        for element in bs.find_all(
+            name=filter.tag,
+            attrs=coalesce_dict_values(filter.attrs, True),
+        )
+    }
+    return sorted(list(headlines))
 
 
 def extract_headlines(site: Site) -> SiteHeadlines:
-    logger.info(f"Site to be scraped: {site.name}")
+    logger.info(f"Extracting from site: {site.name}")
     return SiteHeadlines(
         name=site.name,
         timestamp=get_current_timestamp(),
@@ -57,15 +54,19 @@ def extract_headlines(site: Site) -> SiteHeadlines:
 
 def get_site_headline_lists(sites: list[Site]) -> list[SiteHeadlines]:
     logger.info(f"Sites to be scraped: {[site.name for site in sites]}")
-    return [
-        extracted_headlines
-        for site in sites
-        if (extracted_headlines := call_and_catch_error_with_logging(func=extract_headlines, logger=logger, site=site))
-        is not None
-    ]
+    site_headline_lists = []
+    for site in sites:
+        extracted_headlines = call_and_catch_error_with_logging(
+            func=extract_headlines,
+            logger=logger,
+            site=site,
+        )
+        if extracted_headlines:
+            site_headline_lists.append(extracted_headlines)
+    return site_headline_lists
 
 
-def extract():
+def extract() -> None:
     timestamp_at_start = get_current_timestamp()
     logger.info(f"Extracting headlines at {timestamp_at_start}")
 
@@ -99,9 +100,11 @@ logger = get_logger()
 
 REQUEST_GET_TIMEOUT_SEC = 10
 REQUEST_HEADERS = {
-    "User-Agent": """Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
-                            AppleWebKit/537.36 (KHTML, like Gecko) \
-                            Chrome/127.0.0.0 Safari/537.36""",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/127.0.0.0 Safari/537.36"
+    ),
 }
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")

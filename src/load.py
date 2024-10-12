@@ -14,12 +14,9 @@ from common.utils import (
 )
 
 
-def load_excluded_words_from_txt(txt_path: str) -> set[str]:
-    excluded_words = set()
+def load_excluded_words(txt_path: str) -> set[str]:
     with open(txt_path, "r") as file:
-        for line in file:
-            excluded_words.add(line.strip())
-    return excluded_words
+        return {line.strip() for line in file}
 
 
 def filter_word_frequencies(word_frequencies: WordFrequencies) -> WordFrequencies:
@@ -42,7 +39,7 @@ def generate_load_records(word_frequencies: WordFrequencies, timestamp_str: str)
         yield LoadRecord(timestamp=timestamp_str, word=word, frequency=frequency)
 
 
-def load(bucket: str, word_frequencies_key: str):
+def load(bucket: str, word_frequencies_key: str) -> None:
     logger.info(f"Loading word frequencies from {bucket}/{word_frequencies_key}")
 
     data: str = get_from_s3(bucket_name=bucket, key=word_frequencies_key)
@@ -82,7 +79,7 @@ bigquery_delete_before_write = os.environ.get("BIGQUERY_DELETE_BEFORE_WRITE", "f
 min_word_length = int(os.environ.get("MIN_WORD_LENGTH", "99"))
 min_frequency = int(os.environ.get("MIN_FREQUENCY", "99999"))
 excluded_words_txt_path = os.environ.get("EXCLUDED_WORDS_TXT_PATH", None)
-excluded_words = load_excluded_words_from_txt(excluded_words_txt_path) if excluded_words_txt_path else set()
+excluded_words = load_excluded_words(excluded_words_txt_path) if excluded_words_txt_path else set()
 
 
 # Lambda handler
