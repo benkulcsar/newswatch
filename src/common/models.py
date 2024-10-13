@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, HttpUrl, StrictStr
 
@@ -7,8 +6,8 @@ from pydantic import BaseModel, HttpUrl, StrictStr
 class Filter(BaseModel):
     """A filter to be applied to a BeautifulSoup object."""
 
-    tag: Optional[StrictStr]
-    attrs: Optional[dict[str, Optional[str]]]
+    tag: StrictStr | None
+    attrs: dict[str, str | None] | None
 
 
 class Site(BaseModel):
@@ -29,9 +28,8 @@ class SiteHeadlines(BaseModel):
 
 class WordFrequencies(BaseModel):
     """
-    A dictionary of word frequencies expressed as percentages with four decimal places.
-    In order to store these percentages as integers, the decimal point is shifted four places to the right.
-    For example, a percentage like 0.1025% (or 0.001025) is represented as 1025 in the model.
+    A dictionary of word frequencies stored as integers, representing percentages with
+    four decimal places. For example, a percentage like 0.1025% is stored as 1025.
     """
 
     frequencies: dict[str, int]
@@ -44,7 +42,7 @@ class SiteWordFrequencies(WordFrequencies):
 
 
 class LoadRecord(BaseModel):
-    """A record to be loaded for consumtion"""
+    """A record to be loaded for consumption"""
 
     timestamp: str
     word: StrictStr

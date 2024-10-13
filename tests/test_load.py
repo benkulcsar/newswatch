@@ -1,13 +1,21 @@
+import os
+import tempfile
 from typing import Iterator
 
 import pytest
 
 from common.models import LoadRecord, WordFrequencies
-from load import filter_word_frequencies, generate_load_records
+from load import filter_word_frequencies, generate_load_records, load_excluded_words
 
 
-def test_load_excluded_words_from_txt():
-    pass
+def test_load_excluded_words():
+    words = ["abc", "123", "def456"]
+    with tempfile.NamedTemporaryFile(delete=False, mode="w") as tmp_file:
+        txt_path = tmp_file.name
+        tmp_file.write("\n".join(words) + "\n")
+    result = load_excluded_words(txt_path)
+    assert result == set(words)
+    os.remove(txt_path)
 
 
 @pytest.mark.parametrize(

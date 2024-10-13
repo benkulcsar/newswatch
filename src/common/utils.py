@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import Iterable
 from datetime import datetime, timezone
 import logging
-from typing import Any, Callable, Optional, Protocol, Sequence, Union
+from typing import Any, Callable, Protocol, Sequence
 
 import boto3
 from google.api_core.exceptions import BadRequest as GcpBadRequest
@@ -25,11 +25,11 @@ def get_current_timestamp() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def coalesce_dict_values(dct: Optional[dict], to: Any) -> Optional[dict]:
+def coalesce_dict_values(dct: dict | None, to: Any) -> dict | None:
     return {k: v or to for k, v in dct.items()} if dct is not None else None
 
 
-def merge_dictionaries_summing_values(*dicts: dict[Any, Union[int, float]]) -> dict:
+def merge_dictionaries_summing_values(*dicts: dict[Any, int | float]) -> dict:
     return dict(sum((Counter(d) for d in dicts), Counter()))
 
 
@@ -70,12 +70,12 @@ def get_from_s3(bucket_name: str, key: str) -> str:
     return s3.get_object(Bucket=bucket_name, Key=key)["Body"].read().decode("utf-8")
 
 
-def get_s3_object_age_days(bucket: str, key: str) -> int:
+def get_s3_object_age_days(bucket: str, key: str) -> int | None:
     s3 = boto3.client("s3")
     try:
         response = s3.head_object(Bucket=bucket, Key=key)
     except s3.exceptions.ClientError:
-        return -1
+        return None
     file_upload_time = response["LastModified"].replace(tzinfo=None)
     return (datetime.now() - file_upload_time).days
 
@@ -125,6 +125,10 @@ def get_logger() -> logging.Logger:
 
 
 def call_and_catch_error_with_logging(func: Callable, logger: logging.Logger, **kwargs) -> Any:
+    """
+    Catches and logs exceptions to trigger email alerts, while allowing the lambda function to continue execution.
+    This ensures that an error with one site doesn't halt extraction from other sites.
+    """
     try:
         return func(**kwargs)
     except Exception as e:
