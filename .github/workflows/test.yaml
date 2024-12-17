@@ -12,6 +12,11 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v3
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.7"
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -22,8 +27,12 @@ jobs:
         with:
           use-installer: true
 
-      - name: Install dependencies
-        run: make deps
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.5"
+
+      - name: Install python dependencies
+        run: make setup-ci
 
       - name: Run pre-commit hooks
         run: make pc
