@@ -1,8 +1,8 @@
 pc:
-	pre-commit run -a
+	uv run pre-commit run -a
 
 test:
-	pytest
+	uv run pytest
 
 sv:
 	sam validate --lint
@@ -10,11 +10,11 @@ sv:
 sb:
 	sam build
 
-setup:
-	echo "Local env setup to be added"
+setup-local:
+	uv sync --dev; uv pip compile pyproject.toml --output-file ./src/requirements.txt
 
-deps:
-	python -m pip install --upgrade pip; pip install -r src/requirements.txt; pip install -r tests/requirements.txt;
+setup-ci:
+	uv sync --only-dev
 
 deploy-dev-uk: sv sb
 	sam deploy --config-env dev-uk --no-fail-on-empty-changeset;

@@ -1,9 +1,0 @@
-pydantic~=1.10.7
-flake8~=7.1.0
-moto[s3]~=4.1.9
-mypy~=1.11.1
-pre-commit~=3.8.0
-pyfakefs~=5.6.0
-pytest~=8.3.2
-types-PyYAML~=6.0.12
-types-requests~=2.32.0
