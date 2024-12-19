@@ -10,17 +10,14 @@
     - tag: a
       attrs:
         data-link-name: article
+    - attrs:
+        class: show-underline
 - name: independent
   url: https://www.independent.co.uk
   filters:
     - attrs:
         class: headline
     - tag: h2
-- name: telegraph
-  url: https://www.telegraph.co.uk
-  filters:
-    - attrs:
-        class: list-headline__text
 - name: dailymail
   url: https://www.dailymail.co.uk
   filters:
@@ -30,7 +27,7 @@
 - name: sun
   url: https://www.thesun.co.uk
   filters:
-    - tag: p
+    - tag: h3
       attrs:
         class: teaser__subdeck
 - name: mirror
@@ -64,8 +61,12 @@
 - name: week
   url: https://www.theweek.co.uk/
   filters:
-    - attrs:
-        class: screen-reader-text
+    - tag: h2
+      attrs:
+        class: wdn-listv2-item-content-title
+    - tag: h2
+      attrs:
+        class: listing__title
 - name: ft
   url: https://www.ft.com/
   filters:
