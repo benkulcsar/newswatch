@@ -24,8 +24,10 @@ def load_sites_from_yaml(yaml_path: str) -> list[Site]:
 
 
 def scrape_url(url: str) -> BeautifulSoup:
-    page = requests.get(url=url, headers=REQUEST_HEADERS, timeout=REQUEST_GET_TIMEOUT_SEC)
-    return BeautifulSoup(markup=page.content, features="html.parser")
+    response = requests.get(url=url, headers=REQUEST_HEADERS, timeout=REQUEST_GET_TIMEOUT_SEC)
+    content = response.content
+    logger.info(f"{url} respone: {response.status_code}, received {len(content)} bytes")
+    return BeautifulSoup(markup=content, features="html.parser")
 
 
 def extract_headline(bs: BeautifulSoup, filters: list[Filter]) -> list[str]:
@@ -76,6 +78,9 @@ def extract() -> None:
         ),
     )
 
+    for site in site_headline_lists:
+        logger.info(f"Number of headlines from {site.name}: {len(site.headlines)}")
+
     object_key: str = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="json")
     site_headline_lists_json = convert_objects_to_json_string(site_headline_lists)
 
@@ -105,7 +110,12 @@ REQUEST_HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/127.0.0.0 Safari/537.36"
     ),
+    "Accept-Language": "en-GB,en;q=0.5",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Cache-Control": "max-age=0",
+    "Upgrade-Insecure-Requests": "1",
 }
+
 
 s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
 extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")

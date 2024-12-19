@@ -1,7 +1,7 @@
 - name: nyt
   url: https://www.nytimes.com/
   filters:
-    - tag: h3
+    - tag: p
       attrs:
         class: indicate-hover
 - name: cnn
@@ -19,19 +19,11 @@
   filters:
     - tag: h2
     - tag: h3
-- name: yahoofinance
-  url: https://finance.yahoo.com/
-  filters:
-    - tag: h2
-    - tag: h3
 - name: bbccom
   url: https://www.bbc.com/
   filters:
+    - tag: h2
     - tag: h3
-# - name: washingtonpost
-#   url: https://www.washingtonpost.com/
-#   filters:
-#     - tag: h2
 - name: cnbc
   url: https://www.cnbc.com/
   filters:
