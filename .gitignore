@@ -207,3 +207,4 @@ terraform.rc
 .aws-sam
 .vscode
 *.drawio
+*.parquet

@@ -1,11 +1,18 @@
+from datetime import datetime, timezone
 import os
 import tempfile
-from typing import Iterator
 
 import pytest
 
-from common.models import LoadRecord, WordFrequencies
-from load import filter_word_frequencies, generate_load_records, load_excluded_words
+from src.common.models import WordFrequency
+from src.load import (
+    filter_word_frequencies,
+    convert_filtered_word_frequencies_to_dict,
+    load_excluded_words,
+)
+
+dummy_timestamp = datetime(2023, 6, 13, 21, 0, tzinfo=timezone.utc)
+dummy_timestamp_str = "2023-06-13 21:00"
 
 
 def test_load_excluded_words():
@@ -19,42 +26,74 @@ def test_load_excluded_words():
 
 
 @pytest.mark.parametrize(
-    "word_frequencies,min_word_length,min_frequency,excluded_words,expected_filtered_word_frequencies",
+    "word_frequencies, min_word_length, min_frequency, excluded_words, expected_filtered",
     [
+        # All words pass filtering
         (
-            WordFrequencies(frequencies={"a": 1, "b": 2, "ccc": 3, "ddd": 4}),
+            [
+                WordFrequency(word="a", frequency=1, timestamp=dummy_timestamp),
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
             1,
             1,
-            {},
-            WordFrequencies(frequencies={"a": 1, "b": 2, "ccc": 3, "ddd": 4}),
+            set(),
+            [
+                WordFrequency(word="a", frequency=1, timestamp=dummy_timestamp),
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
         ),
+        # Filter based on min_frequency
         (
-            WordFrequencies(frequencies={"a": 1, "b": 2, "ccc": 3, "ddd": 4}),
+            [
+                WordFrequency(word="a", frequency=1, timestamp=dummy_timestamp),
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
             1,
             2,
-            {},
-            WordFrequencies(frequencies={"b": 2, "ccc": 3, "ddd": 4}),
+            set(),
+            [
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
         ),
+        # Filter based on min_word_length
         (
-            WordFrequencies(frequencies={"a": 1, "b": 2, "ccc": 3, "ddd": 4}),
+            [
+                WordFrequency(word="a", frequency=1, timestamp=dummy_timestamp),
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
             3,
             1,
-            {},
-            WordFrequencies(frequencies={"ccc": 3, "ddd": 4}),
+            set(),
+            [
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
         ),
+        # Filter by both criteria and excluded words
         (
-            WordFrequencies(frequencies={"a": 1, "b": 2, "ccc": 3, "ddd": 4}),
-            3,
-            4,
-            {},
-            WordFrequencies(frequencies={"ddd": 4}),
-        ),
-        (
-            WordFrequencies(frequencies={"a": 1, "b": 2, "ccc": 3, "ddd": 4}),
+            [
+                WordFrequency(word="a", frequency=1, timestamp=dummy_timestamp),
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="ccc", frequency=3, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
             1,
             2,
             {"ccc"},
-            WordFrequencies(frequencies={"b": 2, "ddd": 4}),
+            [
+                WordFrequency(word="bb", frequency=2, timestamp=dummy_timestamp),
+                WordFrequency(word="dddd", frequency=4, timestamp=dummy_timestamp),
+            ],
         ),
     ],
 )
@@ -63,21 +102,28 @@ def test_filter_word_frequencies(
     min_word_length,
     min_frequency,
     excluded_words,
-    expected_filtered_word_frequencies,
+    expected_filtered,
 ):
     from unittest.mock import patch
 
-    with patch("load.excluded_words", excluded_words), patch("load.min_word_length", min_word_length), patch(
-        "load.min_frequency",
+    with patch("src.load.excluded_words", excluded_words), patch("src.load.min_word_length", min_word_length), patch(
+        "src.load.min_frequency",
         min_frequency,
     ):
-        assert filter_word_frequencies(word_frequencies) == expected_filtered_word_frequencies
+        filtered = filter_word_frequencies(word_frequencies)
+        assert filtered == expected_filtered
 
 
-def test_generate_load_records(
-    test_word_frequencies: WordFrequencies,
-    test_timestamp_str: str,
-    test_load_records: LoadRecord,
-) -> None:
-    load_records: Iterator[LoadRecord] = generate_load_records(test_word_frequencies, test_timestamp_str)
-    assert list(load_records) == test_load_records
+def test_convert_filtered_word_frequencies_to_dict():
+    flat_list = [
+        WordFrequency(word="alpha", frequency=100, timestamp=dummy_timestamp),
+        WordFrequency(word="beta", frequency=200, timestamp=dummy_timestamp),
+    ]
+
+    records: list[dict[str, int | str]] = convert_filtered_word_frequencies_to_dict(flat_list)
+    records_list = list(records)
+    expected = [
+        {"word": "alpha", "timestamp": dummy_timestamp_str, "frequency": 100},
+        {"word": "beta", "timestamp": dummy_timestamp_str, "frequency": 200},
+    ]
+    assert records_list == expected

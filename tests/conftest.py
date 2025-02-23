@@ -4,13 +4,11 @@ import pytest
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
 
-from common.models import (
+from src.common.models import (
     Filter,
-    LoadRecord,
     Site,
-    SiteHeadlines,
-    SiteWordFrequencies,
-    WordFrequencies,
+    Headline,
+    WordFrequency,
 )
 
 
@@ -64,46 +62,28 @@ def test_headlines() -> dict[str, list[str]]:
 
 
 @pytest.fixture
-def test_site_headlines_collection() -> list[SiteHeadlines]:
+def test_site_headlines_collection() -> list[Headline]:
+    headlines = ["abc", "xyz", "123"]
     return [
-        SiteHeadlines(
-            name="abc",
+        Headline(
+            site_name="abc",
             timestamp=datetime.datetime(2021, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
-            headlines=["abc", "xyz", "123"],
-        ),
-        SiteHeadlines(
-            name="def",
+            headline=headline,
+        )
+        for headline in headlines
+    ] + [
+        Headline(
+            site_name="def",
             timestamp=datetime.datetime(2022, 10, 10, 10, 10, 10, tzinfo=datetime.timezone.utc),
-            headlines=["def", "xyz", "456"],
-        ),
+            headline=headline,
+        )
+        for headline in headlines
     ]
 
 
 @pytest.fixture
-def test_site_word_frequencies_collection() -> list[SiteWordFrequencies]:
-    return [
-        SiteWordFrequencies(
-            name="abc",
-            frequencies={"abc": 33333, "xyz": 33333, "123": 33333},
-        ),
-        SiteWordFrequencies(
-            name="def",
-            frequencies={"def": 33333, "xyz": 33333, "456": 33333},
-        ),
-    ]
-
-
-@pytest.fixture
-def test_word_frequencies() -> WordFrequencies:
-    return WordFrequencies(
-        frequencies={
-            "abc": 16666,
-            "xyz": 33333,
-            "123": 16666,
-            "def": 16666,
-            "456": 16666,
-        },
-    )
+def test_timestamp() -> datetime.datetime:
+    return datetime.datetime(2023, 6, 13, 21, 0, 0)
 
 
 @pytest.fixture
@@ -112,30 +92,30 @@ def test_timestamp_str() -> str:
 
 
 @pytest.fixture
-def test_load_records(test_timestamp_str) -> list[LoadRecord]:
+def test_load_records(test_timestamp) -> list[WordFrequency]:
     return [
-        LoadRecord(
-            timestamp=test_timestamp_str,
+        WordFrequency(
+            timestamp=test_timestamp,
             word="abc",
             frequency=16666,
         ),
-        LoadRecord(
-            timestamp=test_timestamp_str,
+        WordFrequency(
+            timestamp=test_timestamp,
             word="xyz",
             frequency=33333,
         ),
-        LoadRecord(
-            timestamp=test_timestamp_str,
+        WordFrequency(
+            timestamp=test_timestamp,
             word="123",
             frequency=16666,
         ),
-        LoadRecord(
-            timestamp=test_timestamp_str,
+        WordFrequency(
+            timestamp=test_timestamp,
             word="def",
             frequency=16666,
         ),
-        LoadRecord(
-            timestamp=test_timestamp_str,
+        WordFrequency(
+            timestamp=test_timestamp,
             word="456",
             frequency=16666,
         ),

@@ -1,60 +1,71 @@
 import os
-from typing import Iterator
+import sys
 
-from common.models import LoadRecord, WordFrequencies
+from common.models import WordFrequency
 from common.utils import (
     DeleteFailedError,
-    convert_json_string_to_objects,
+    convert_parquet_bytes_to_objects,
     delete_timestamp_from_bigquery,
-    get_from_s3,
-    get_logger,
     extract_s3_bucket_and_key_from_event,
     get_datetime_from_s3_key,
+    get_from_s3,
+    get_logger,
     insert_data_into_bigquery_table,
 )
 
 
 def load_excluded_words(txt_path: str) -> set[str]:
+    """Load excluded words that shouldn't be inserted to BigQuery."""
     with open(txt_path, "r") as file:
         return {line.strip() for line in file}
 
 
-def filter_word_frequencies(word_frequencies: WordFrequencies) -> WordFrequencies:
+def filter_word_frequencies(flat_word_frequencies: list[WordFrequency]) -> list[WordFrequency]:
+    """
+    Filter out words that are too short, in the exclusion list or below a frequency threshold.
+    TODO: this should be a pure function or maybe "load" should be converted to a class.
+    """
+
     def _keep_word_frequency(word: str, frequency: int) -> bool:
+        """Return True if the word meets the length and frequency criteria."""
         if len(word) < min_word_length or word in excluded_words or frequency < min_frequency:
             return False
         return True
 
-    return WordFrequencies(
-        frequencies={
-            word: frequency
-            for word, frequency in word_frequencies.frequencies.items()
-            if _keep_word_frequency(word, frequency)
-        },
-    )
+    return [fwf for fwf in flat_word_frequencies if _keep_word_frequency(fwf.word, fwf.frequency)]
 
 
-def generate_load_records(word_frequencies: WordFrequencies, timestamp_str: str) -> Iterator[LoadRecord]:
-    for word, frequency in word_frequencies.frequencies.items():
-        yield LoadRecord(timestamp=timestamp_str, word=word, frequency=frequency)
+def convert_filtered_word_frequencies_to_dict(word_frequencies: list[WordFrequency]) -> list[dict[str, int | str]]:
+    """Convert a list of WordFrequency objects into a dictionary format with timestamps as strings."""
+
+    return [
+        {
+            "word": wf.word,
+            "frequency": wf.frequency,
+            "timestamp": wf.timestamp.strftime("%Y-%m-%d %H:%M"),
+        }
+        for wf in word_frequencies
+    ]
 
 
 def load(bucket: str, word_frequencies_key: str) -> None:
+    """Load word frequencies from S3 and insert them into BigQuery after applying filters."""
+
     logger.info(f"Loading word frequencies from {bucket}/{word_frequencies_key}")
-
-    data: str = get_from_s3(bucket_name=bucket, key=word_frequencies_key)
-    word_frequencies: WordFrequencies = convert_json_string_to_objects(json_string=f"{data}", cls=WordFrequencies)[0]
-    filtered_word_frequencies: WordFrequencies = filter_word_frequencies(word_frequencies=word_frequencies)
-
     timestamp = get_datetime_from_s3_key(word_frequencies_key)
-    records_to_load: list[LoadRecord] = list(
-        generate_load_records(
-            word_frequencies=filtered_word_frequencies,
-            timestamp_str=timestamp.strftime("%Y-%m-%d %H:%M"),
-        ),
+    word_frequency_bytes: bytes = get_from_s3(bucket_name=bucket, key=word_frequencies_key)
+    word_frequencies: list[WordFrequency] = convert_parquet_bytes_to_objects(
+        parquet_bytes=word_frequency_bytes,
+        cls=WordFrequency,
     )
+    filtered_word_frequencies = filter_word_frequencies(word_frequencies)
 
-    records_to_load_dicts: list[dict] = [dict(lr) for lr in records_to_load]
+    records_to_load_dicts = convert_filtered_word_frequencies_to_dict(filtered_word_frequencies)
+
+    if is_local and not is_pytest:
+        logger.info(records_to_load_dicts[:5])
+        breakpoint()
+        return
 
     if bigquery_delete_before_write == "true":
         logger.info(f"Attempting to delete: {timestamp} from {bigquery_table_id}")
@@ -81,6 +92,8 @@ min_frequency = int(os.environ.get("MIN_FREQUENCY", "99999"))
 excluded_words_txt_path = os.environ.get("EXCLUDED_WORDS_TXT_PATH", None)
 excluded_words = load_excluded_words(excluded_words_txt_path) if excluded_words_txt_path else set()
 
+is_local = os.environ.get("AWS_EXECUTION_ENV") is None
+is_pytest = "pytest" in sys.modules
 
 # Lambda handler
 
@@ -88,3 +101,7 @@ excluded_words = load_excluded_words(excluded_words_txt_path) if excluded_words_
 def lambda_handler(event, context):
     bucket, key = extract_s3_bucket_and_key_from_event(event)
     load(bucket, key)
+
+
+if is_local and not is_pytest and __name__ == "__main__":
+    load(os.environ.get("TEST_S3_BUCKET_NAME", ""), os.environ.get("TEST_S3_TRANSFORM_KEY", ""))

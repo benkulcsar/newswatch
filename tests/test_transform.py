@@ -1,18 +1,24 @@
-import pytest
-from unittest.mock import patch, ANY
+from collections import Counter
+from unittest.mock import ANY, patch
 
-from common.models import SiteHeadlines, SiteWordFrequencies, WordFrequencies
-from transform import (
+import pytest
+
+from src.common.models import Headline, WordFrequency
+from src.transform import (
     get_wordnet_corpus,
     count_words_in_text,
-    get_site_word_frequencies_from_site_headlines,
+    group_headlines_by_site,
+    calculate_word_frequencies,
+    calculate_word_frequencies_by_site,
+    filter_sites,
+    sum_frequencies,
     merge_site_word_frequencies,
 )
 
 
-@patch("transform.get_s3_object_age_days")
-@patch("transform.download_from_s3", return_value="downloaded from S3")
-@patch("transform.upload_to_s3", return_value="uploaded to S3")
+@patch("src.transform.get_s3_object_age_days")
+@patch("src.transform.download_from_s3", return_value="downloaded from S3")
+@patch("src.transform.upload_to_s3", return_value="uploaded to S3")
 @patch("nltk.download", return_value="downloaded from NLTK")
 @patch("nltk.data.path")
 def test_get_wordnet_corpus(mock_nltk_path, mock_download_nltk, mock_upload_s3, mock_download_s3, mock_age_days):
@@ -64,25 +70,103 @@ def test_count_words_in_text(text: str, expected_word_counts: dict) -> None:
     assert count_words_in_text(text) == expected_word_counts, f"Counting words failed for text: {text}"
 
 
-# Indirectly testing count_words_in_text() too
-def test_get_site_word_frequencies_from_site_headlines(
-    test_site_headlines_collection: list[SiteHeadlines],
-    test_site_word_frequencies_collection: list[SiteWordFrequencies],
-) -> None:
-    for site_headlines, site_word_frequencies in zip(
-        test_site_headlines_collection,
-        test_site_word_frequencies_collection,
-    ):
-        assert (
-            get_site_word_frequencies_from_site_headlines(site_headlines) == site_word_frequencies
-        ), f"Getting site word frequencies failed for site headlines: {site_headlines}"
+def test_group_headlines_by_site(test_site_headlines_collection):
+    grouped = group_headlines_by_site(test_site_headlines_collection)
+    assert set(grouped.keys()) == {"abc", "def"}
+    assert len(grouped["abc"]) == 3
+    assert len(grouped["def"]) == 3
 
 
-def test_merge_site_word_frequencies(
-    test_site_word_frequencies_collection: list[SiteWordFrequencies],
-    test_word_frequencies: WordFrequencies,
-) -> None:
-    assert (
-        merge_site_word_frequencies(test_site_word_frequencies_collection, word_count_threshold=0)
-        == test_word_frequencies
-    ), f"Merging site word frequencies failed for site word frequencies: {test_site_word_frequencies_collection}"
+# TODO: create fixtures from similar/same data
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("apple apple orange", {"apple": 100000 * 2 / 3, "orange": 100000 * 1 / 3}),
+        ("banana banana banana", {"banana": 100000.0}),
+    ],
+)
+def test_calculate_word_frequencies(text, expected):
+    freqs = calculate_word_frequencies(text)
+    for word, freq in expected.items():
+        assert freqs[word] == pytest.approx(freq)
+
+
+def test_calculate_word_frequencies_by_site(test_timestamp):
+    headline1 = Headline(
+        site_name="site1",
+        timestamp=test_timestamp,
+        headline="apple apple orange",
+    )
+    headline2 = Headline(
+        site_name="site2",
+        timestamp=test_timestamp,
+        headline="banana banana",
+    )
+    grouped = {
+        "site1": [headline1],
+        "site2": [headline2],
+    }
+
+    result = calculate_word_frequencies_by_site(grouped, test_timestamp)
+
+    site1_freqs = {wf.word: wf.frequency for wf in result["site1"]}
+    site2_freqs = {wf.word: wf.frequency for wf in result["site2"]}
+
+    assert site1_freqs.get("apple") == int(100000 * 2 / 3)
+    assert site1_freqs.get("orange") == int(100000 * 1 / 3)
+    assert site2_freqs.get("banana") == 100000
+    for site_freqs in result.values():
+        for wf in site_freqs:
+            assert wf.timestamp == test_timestamp
+
+
+def test_filter_sites(test_timestamp):
+    wf_site1 = [
+        WordFrequency(word="apple", frequency=100, timestamp=test_timestamp),
+        WordFrequency(word="orange", frequency=50, timestamp=test_timestamp),
+    ]
+    wf_site2 = [
+        WordFrequency(word="banana", frequency=200, timestamp=test_timestamp),
+    ]
+    site_word_freqs = {"site1": wf_site1, "site2": wf_site2}
+    filtered = filter_sites(site_word_freqs, word_count_threshold=2)
+    assert "site1" in filtered
+    assert "site2" not in filtered
+
+
+def test_sum_frequencies(test_timestamp):
+    wf_site1 = [
+        WordFrequency(word="apple", frequency=100, timestamp=test_timestamp),
+        WordFrequency(word="orange", frequency=50, timestamp=test_timestamp),
+    ]
+    wf_site2 = [
+        WordFrequency(word="apple", frequency=200, timestamp=test_timestamp),
+    ]
+    site_word_freqs = {"site1": wf_site1, "site2": wf_site2}
+    total = sum_frequencies(site_word_freqs)
+    expected = Counter({"apple": 300, "orange": 50})
+    assert total == expected
+
+
+def test_merge_site_word_frequencies(test_timestamp):
+    site_word_freqs = {
+        "site1": [
+            WordFrequency(word="apple", frequency=100, timestamp=test_timestamp),
+            WordFrequency(word="orange", frequency=50, timestamp=test_timestamp),
+        ],
+        "site2": [
+            WordFrequency(word="apple", frequency=200, timestamp=test_timestamp),
+            WordFrequency(word="orange", frequency=100, timestamp=test_timestamp),
+        ],
+        "site3": [
+            WordFrequency(word="banana", frequency=300, timestamp=test_timestamp),
+        ],
+    }
+
+    merged_thresh = merge_site_word_frequencies(site_word_freqs, word_count_threshold=2)
+    merged_thresh_dict = {wf.word: wf.frequency for wf in merged_thresh}
+    assert merged_thresh_dict["apple"] == 150
+    assert merged_thresh_dict["orange"] == 75
+    assert "banana" not in merged_thresh_dict

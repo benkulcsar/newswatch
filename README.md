@@ -8,7 +8,7 @@
 
 # Summary
 
-Newswatch collects data from leading UK and US news websites' front pages and creates visualisations to track word frequency changes over time, offering insights into current news trends and topics.
+Newswatch collects data from leading UK and US news websites' front pages and creates visualisations to track word frequency changes over time, providing insights into current news trends and topics.
 
 ## Line Chart
 
@@ -28,7 +28,7 @@ Data is available from:
 
 # Architecture
 
-High-level architecture diagram:
+High-level architecture overview:
 
 !["Architecture"](assets/img/architecture.png?v=4&s=200 "Architecture")
 
@@ -36,11 +36,13 @@ High-level architecture diagram:
 
 To enhance dashboard performance, the data tables are partitioned by date, and Google's [BI Engine](https://cloud.google.com/bigquery/docs/bi-engine-intro) is used for faster query processing.
 
-To reduce noise in the charts and present smoother trends, a moving average of word frequencies is calculated. This calculation runs hourly through a scheduled [query](terraform/bigquery_moving_avg.sql).
+To reduce noise in the charts and present smoother trends, a moving average of word frequencies is calculated over the last 24 hours. This calculation runs hourly through a scheduled [query](terraform/bigquery_moving_avg.sql).
 
 # Runbook
 
-## Manually executing lambda functions for backfilling
+## Manually executing AWS lambda functions for backfilling
+
+This requires AWS credentials.
 
 ```shell
 ./src/scripts/run_lambda.sh <start-date> <end-date> <region> <function-name> <s3-bucket> <s3-prefix>
@@ -66,14 +68,26 @@ Examples:
     "word-frequencies"
 ```
 
-## Execute and debug extractions locally
+## Execute and debug stages locally
 
-Local execution with debugging is only implemented for extraction because this is the only stage that can't be "backfilled", so bugs have to be fixed as soon as possible.
+Local execution requires AWS credentials and certain environment variables.
+
+Each variable is required for specific stages of execution as noted below:
+
+- TEST_S3_BUCKET_NAME: all
+- SITES_YAML_PATH: extract
+- TEST_S3_EXTRACT_KEY: extract, transform
+- TEST_S3_TRANSFORM_KEY: transform, load
+- MIN_WORD_LENGTH: load
+- MIN_FREQUENCY: load
+- EXCLUDED_WORDS_TXT_PATH: load
+
+Specific stages can be executed by the following commands:
 
 ```shell
-export SITES_YAML_PATH="src/resources/sites-with-filters-uk.yaml"
-# or
-export SITES_YAML_PATH="src/resources/sites-with-filters-us.yaml
-
-python ./src/extract.py
+uv run ./src/extract.py
+uv run ./src/transform.py
+uv run ./src/load.py
 ```
+
+Note: When run locally, `load.py` does not connect to BigQuery.
