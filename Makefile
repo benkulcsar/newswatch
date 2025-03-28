@@ -4,6 +4,12 @@ pc:
 test:
 	uv run pytest
 
+test-cov:
+	uv run pytest --junitxml=pytest.xml --cov=src
+
+badge: test-cov
+	uv run coverage-badge -o ./assets/img/coverage.svg
+
 sv:
 	sam validate --lint
 

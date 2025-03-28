@@ -1,7 +1,12 @@
 name: Test
 run-name: '${{ github.workflow }}'
 
-on: [push]
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: read
 
 jobs:
   code-quality-and-tests:
@@ -38,7 +43,13 @@ jobs:
         run: make pc
 
       - name: Run tests
-        run: make test
+        run: make test-cov | tee pytest-coverage.txt
+
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
 
       - name: Validate SAM template
         run: make sv
