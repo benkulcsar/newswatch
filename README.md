@@ -1,7 +1,7 @@
 # 🗞️Newswatch🗞️
 [![python](https://img.shields.io/badge/python-3.12-blue?style=flat&logo=python&logoColor=white)](https://www.python.org)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![coverage](assets/img/coverage.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **[newswatch.live](http://newswatch.live "newswatch.live")** - real-time word frequency visualisation for 🇬🇧 and 🇺🇸 news

@@ -208,3 +208,5 @@ terraform.rc
 .vscode
 *.drawio
 *.parquet
+pytest.xml
+pytest-coverage.txt
