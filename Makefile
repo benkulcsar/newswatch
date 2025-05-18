@@ -1,8 +1,15 @@
-pc:
+.PHONY: lint test validate check test-cov badge build
+
+lint:
 	uv run pre-commit run -a
 
 test:
 	uv run pytest
+
+validate:
+	sam validate --lint
+
+check: lint test validate
 
 test-cov:
 	uv run pytest --junitxml=pytest.xml --cov=src
@@ -10,10 +17,7 @@ test-cov:
 badge: test-cov
 	uv run coverage-badge -o ./assets/img/coverage.svg
 
-sv:
-	sam validate --lint
-
-sb:
+build:
 	sam build
 
 setup-local:
@@ -33,8 +37,6 @@ deploy-live-uk: sv sb
 
 deploy-live-us: sv sb
 	sam deploy --config-env live-us --no-fail-on-empty-changeset;
-
-check: pc test sv
 
 tf-init-dev:
 	terraform -chdir="./terraform" init -reconfigure -backend-config="./backend/backend-dev.tfvars"

@@ -1,13 +1,13 @@
-from datetime import datetime, timezone
 import os
 import tempfile
+from datetime import datetime, timezone
 
 import pytest
 
-from src.common.models import WordFrequency
-from src.load import (
-    filter_word_frequencies,
+from newswatch.common.models import WordFrequency
+from newswatch.load import (
     convert_filtered_word_frequencies_to_dict,
+    filter_word_frequencies,
     load_excluded_words,
 )
 
@@ -104,14 +104,12 @@ def test_filter_word_frequencies(
     excluded_words,
     expected_filtered,
 ):
-    from unittest.mock import patch
+    mp = pytest.MonkeyPatch()
+    mp.setenv("MIN_WORD_LENGTH", str(min_word_length))
+    mp.setenv("MIN_FREQUENCY", str(min_frequency))
 
-    with patch("src.load.excluded_words", excluded_words), patch("src.load.min_word_length", min_word_length), patch(
-        "src.load.min_frequency",
-        min_frequency,
-    ):
-        filtered = filter_word_frequencies(word_frequencies)
-        assert filtered == expected_filtered
+    filtered = filter_word_frequencies(word_frequencies, excluded_words)
+    assert filtered == expected_filtered
 
 
 def test_convert_filtered_word_frequencies_to_dict():

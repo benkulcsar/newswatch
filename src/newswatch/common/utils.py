@@ -1,9 +1,13 @@
+"""
+Utility functions for YAML parsing, text normalization and logging.
+"""
+
 import io
 import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Callable, Protocol, Sequence
+from typing import Any, Callable, Protocol, Sequence, TypeVar
 
 import boto3
 import pyarrow as pa
@@ -11,6 +15,9 @@ import pyarrow.parquet as pq
 from google.api_core.exceptions import BadRequest as GcpBadRequest
 from google.cloud import bigquery
 from google.oauth2 import service_account
+
+
+T = TypeVar("T")
 
 
 class HasDict(Protocol):
@@ -29,9 +36,9 @@ def get_current_timestamp() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def coalesce_dict_values(dct: dict | None, to: Any) -> dict | None:
+def coalesce_dict_values(dct: dict[str, str | None], default: T) -> dict[str, str | T]:
     """Replace None values in a dictionary with a given default."""
-    return {k: v or to for k, v in dct.items()} if dct is not None else None
+    return {k: v or default for k, v in dct.items()} if dct is not None else None
 
 
 def convert_objects_to_parquet_bytes(object_collection: list) -> bytes:
@@ -75,8 +82,8 @@ def extract_s3_bucket_and_key_from_event(event: dict) -> tuple[str, str]:
     return event["detail"]["bucket"]["name"], event["detail"]["object"]["key"]
 
 
-def put_to_s3(bucket_name: str, key: str, data: str) -> dict:
-    """Upload data to an S3 bucket."""
+def put_to_s3(bucket_name: str, key: str, data: bytes) -> dict:
+    """Upload binary data to an S3 bucket."""
     s3 = boto3.client("s3")
     return s3.put_object(Bucket=bucket_name, Key=key, Body=data)
 

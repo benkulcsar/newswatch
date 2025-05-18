@@ -4,12 +4,7 @@ import pytest
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
 
-from src.common.models import (
-    Filter,
-    Site,
-    Headline,
-    WordFrequency,
-)
+from newswatch.common.models import Filter, Headline, Site, WordFrequency
 
 
 @pytest.fixture

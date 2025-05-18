@@ -1,3 +1,7 @@
+"""
+Extract raw headlines from target news sites and store them in S3.
+"""
+
 import os
 import sys
 from datetime import datetime
@@ -6,8 +10,8 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-from common.models import Filter, Site, Headline
-from common.utils import (
+from newswatch.common.models import Filter, Headline, Site
+from newswatch.common.utils import (
     build_s3_key,
     call_and_catch_error_with_logging,
     coalesce_dict_values,
@@ -18,6 +22,22 @@ from common.utils import (
 )
 
 logger = get_logger()
+
+is_local = os.environ.get("AWS_EXECUTION_ENV") is None
+is_pytest = "pytest" in sys.modules
+
+REQUEST_GET_TIMEOUT_SEC = 10
+REQUEST_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/127.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-GB,en;q=0.5",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Cache-Control": "max-age=0",
+    "Upgrade-Insecure-Requests": "1",
+}
 
 
 def load_sites_from_yaml(yaml_path: str) -> list[Site]:
@@ -33,21 +53,25 @@ def scrape_url(url: str) -> BeautifulSoup:
 
     response = requests.get(url=url, headers=REQUEST_HEADERS, timeout=REQUEST_GET_TIMEOUT_SEC)
     content = response.content
-    logger.info(f"{url} respone: {response.status_code}, received {len(content)} bytes")
+    logger.info(f"{url} response: {response.status_code}, received {len(content)} bytes")
     return BeautifulSoup(markup=content, features="html.parser")
 
 
-def extract_headline_strings(bs: BeautifulSoup, filters: list[Filter]) -> list[str]:
+def extract_headline_strings(bs: BeautifulSoup, bsoup_filters: list[Filter]) -> list[str]:
     """Extract and return deduplicated headlines from HTML using given filters."""
 
-    headlines: set[str] = {
-        element.text
-        for filter in filters
+    headlines: set[str] = set()
+    for bsoup_filter in bsoup_filters:
+        if (optional_attrs := bsoup_filter.attrs) is not None:
+            bsoup_attrs = coalesce_dict_values(dct=optional_attrs, default=True)
+        else:
+            bsoup_attrs = None
         for element in bs.find_all(
-            name=filter.tag,
-            attrs=coalesce_dict_values(filter.attrs, True),
-        )
-    }
+            name=bsoup_filter.tag,
+            attrs=bsoup_attrs,
+        ):
+            headlines.add(element.text)
+
     return sorted(list(headlines))
 
 
@@ -59,7 +83,7 @@ def get_headlines(sites: list[Site], timestamp: datetime) -> list[Headline]:
 
     for site in sites:
         logger.info(f"Extracting from site: {site.name}")
-        extracted_headlines = extract_headline_strings(bs=scrape_url(site.url), filters=site.filters)
+        extracted_headlines = extract_headline_strings(bs=scrape_url(site.url), bsoup_filters=site.filters)
         if extracted_headlines:
             site_headlines = [
                 Headline(
@@ -80,21 +104,19 @@ def extract() -> None:
     timestamp_at_start = get_current_timestamp()
     logger.info(f"Extracting headlines at {timestamp_at_start}")
 
+    sites_yaml_path = os.environ.get("SITES_YAML_PATH", "")
     sites: list[Site] = load_sites_from_yaml(yaml_path=sites_yaml_path)
     headlines: list[Headline] = get_headlines(sites=sites, timestamp=timestamp_at_start)
 
-    object_key: str = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="parquet")
     headlines_parquet: bytes = convert_objects_to_parquet_bytes(headlines)
 
-    if is_local and not is_pytest:
-        test_s3_response: dict = put_to_s3(
-            bucket_name=os.environ.get("TEST_S3_BUCKET_NAME"),
-            key=os.environ.get("TEST_S3_EXTRACT_KEY"),
-            data=headlines_parquet,
-        )
-        logger.info(test_s3_response)
-        breakpoint()
-        return
+    if (not is_local) or is_pytest:
+        s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
+        extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")
+        object_key = build_s3_key(prefix=extract_s3_prefix, timestamp=timestamp_at_start, extension="parquet")
+    else:
+        s3_bucket_name = os.environ.get("TEST_S3_BUCKET_NAME", "")
+        object_key = os.environ.get("TEST_S3_EXTRACT_KEY", "")
 
     s3_response: dict = put_to_s3(
         bucket_name=s3_bucket_name,
@@ -105,29 +127,6 @@ def extract() -> None:
     if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
         logger.info(f"Uploaded headlines to S3: {s3_bucket_name}/{object_key}")
 
-
-# Lambda cold start
-
-REQUEST_GET_TIMEOUT_SEC = 10
-REQUEST_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/127.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "en-GB,en;q=0.5",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Cache-Control": "max-age=0",
-    "Upgrade-Insecure-Requests": "1",
-}
-
-
-s3_bucket_name = os.environ.get("S3_BUCKET_NAME", "")
-extract_s3_prefix = os.environ.get("EXTRACT_S3_PREFIX", "")
-sites_yaml_path = os.environ.get("SITES_YAML_PATH", "")
-
-is_local = os.environ.get("AWS_EXECUTION_ENV") is None
-is_pytest = "pytest" in sys.modules
 
 # Lambda handler
 

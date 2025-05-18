@@ -5,11 +5,11 @@ import logging
 
 import boto3
 import moto
-import pytest
 import pyarrow.parquet as pq
+import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher as FSPatcher
 
-from src.common.utils import (
+from newswatch.common.utils import (
     build_s3_key,
     call_and_catch_error_with_logging,
     coalesce_dict_values,

@@ -6,14 +6,14 @@ from bs4 import BeautifulSoup
 from pydantic import ValidationError
 from requests.models import Response
 
-from src.common.models import Filter, Site, Headline
-from src.extract import (
+from newswatch.common.models import Filter, Headline, Site
+from newswatch.extract import (
     REQUEST_GET_TIMEOUT_SEC,
     REQUEST_HEADERS,
     extract_headline_strings,
+    get_headlines,
     load_sites_from_yaml,
     scrape_url,
-    get_headlines,
 )
 
 
@@ -68,7 +68,9 @@ def test_extract_headline_strings(
 
 
 def test_get_headlines(test_sites: list[Site], test_timestamp: datetime):
-    with patch("src.extract.extract_headline_strings", return_value=["foo", "bar"]), patch("src.extract.scrape_url"):
+    with patch("newswatch.extract.extract_headline_strings", return_value=["foo", "bar"]), patch(
+        "newswatch.extract.scrape_url",
+    ):
         expected_headlines = [
             Headline(site_name=site.name, timestamp=test_timestamp, headline=headline)
             for site in test_sites
