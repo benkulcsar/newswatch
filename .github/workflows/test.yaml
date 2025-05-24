@@ -40,7 +40,7 @@ jobs:
         run: make setup-ci
 
       - name: Run pre-commit hooks
-        run: make pc
+        run: make lint
 
       - name: Run tests
         run: make test-cov | tee pytest-coverage.txt
@@ -52,4 +52,4 @@ jobs:
           junitxml-path: ./pytest.xml
 
       - name: Validate SAM template
-        run: make sv
+        run: make validate
