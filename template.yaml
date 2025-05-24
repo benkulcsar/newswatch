@@ -238,7 +238,7 @@ Resources:
       MemorySize: 128
       FunctionName: !Sub newswatch-monitoring-sns-${Env}
       Handler: monitoring.lambda_handler
-      CodeUri: src/newswatch
+      CodeUri: src
       Description: !Sub Newswatch Monitoring Function (${Env})
       Architectures:
       - x86_64

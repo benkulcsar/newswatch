@@ -5,8 +5,8 @@ Load processed word frequency records into a BigQuery table.
 import os
 import sys
 
-from newswatch.common.models import WordFrequency
-from newswatch.common.utils import (
+from common.models import WordFrequency
+from common.utils import (
     DeleteFailedError,
     convert_parquet_bytes_to_objects,
     delete_timestamp_from_bigquery,

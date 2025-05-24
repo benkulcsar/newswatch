@@ -11,8 +11,8 @@ from datetime import datetime
 import nltk
 from textblob import Word
 
-from newswatch.common.models import Headline, WordFrequency
-from newswatch.common.utils import (
+from common.models import Headline, WordFrequency
+from common.utils import (
     build_s3_key,
     convert_objects_to_parquet_bytes,
     convert_parquet_bytes_to_objects,

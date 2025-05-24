@@ -131,8 +131,8 @@ mock_bigquery_client = MockBigQueryClient()
 @patch("newswatch.extract.load_sites_from_yaml", return_value=[site_from_yaml])
 @patch("newswatch.extract.get_current_timestamp", return_value=timestamp)
 @patch("newswatch.transform.WRITABLE_PATH", transform_writable_path)
-@patch("newswatch.load.load_excluded_words", lambda _: excluded_words)
-@patch("newswatch.common.utils._get_bq_client", return_value=mock_bigquery_client)
+@patch("newswatch.load.load_excluded_words", return_value=excluded_words)
+@patch("common.utils._get_bq_client", return_value=mock_bigquery_client)
 def test_newswatch_e2e(*__args):
     # Setup
     mp = MonkeyPatch()

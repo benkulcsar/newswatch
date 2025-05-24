@@ -15,8 +15,12 @@ dependencies = [
     "textblob~=0.17.1",
 ]
 
+packages = [
+  { include = "newswatch", from = "src" }
+]
+
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "src/newswatch"]
 
 [tool.mypy]
 ignore_missing_imports = true

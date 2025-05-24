@@ -10,8 +10,8 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
-from newswatch.common.models import Filter, Headline, Site
-from newswatch.common.utils import (
+from common.models import Filter, Headline, Site
+from common.utils import (
     build_s3_key,
     call_and_catch_error_with_logging,
     coalesce_dict_values,
