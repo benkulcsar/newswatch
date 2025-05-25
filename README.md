@@ -85,9 +85,9 @@ Each variable is required for specific stages of execution as noted below:
 Specific stages can be executed by the following commands:
 
 ```shell
-uv run ./src/extract.py
-uv run ./src/transform.py
-uv run ./src/load.py
+uv run ./src/newswatch/extract.py
+uv run ./src/newswatch/transform.py
+uv run ./src/newswatch/load.py
 ```
 
 Note: When run locally, `load.py` does not connect to BigQuery.

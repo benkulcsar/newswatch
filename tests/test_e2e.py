@@ -1,31 +1,32 @@
 import io
 from datetime import datetime
-from unittest.mock import patch
 from typing import Any
+from unittest.mock import patch
 
 import boto3
 import moto
 import pyarrow.parquet as pq
 from pydantic import HttpUrl
 from pydantic.tools import parse_obj_as
+from pytest import MonkeyPatch
 from requests.models import Response
 
-from src.common.models import Filter, Site
-from src.extract import lambda_handler as extract_lambda_handler
-from src.load import lambda_handler as load_lambda_handler
-from src.transform import lambda_handler as transform_lambda_handler
+from newswatch.common.models import Filter, Site
+from newswatch.extract import lambda_handler as extract_lambda_handler
+from newswatch.load import lambda_handler as load_lambda_handler
+from newswatch.transform import lambda_handler as transform_lambda_handler
 
-# Global variables normally set by environment variables at lambda cold start
+# Variables that are set based on environment variables in the pipelines
 s3_bucket_name = "test-bucket"
 extract_s3_prefix = "extracted-headlines"
 transform_s3_prefix = "word-frequencies"
 transform_writable_path = "./tmp"
-transform_word_count_threshold = 0
-bigquery_table = "nwproject.nwdataset.nwtable"
+transform_word_count_threshold = "0"
+bigquery_table_id = "nwproject.nwdataset.nwtable"
 bigquery_delete_before_write = "true"
-min_word_length = 3
-min_frequency = 10000
-excluded_words = ["and", "the", "bobby"]
+min_word_length = "3"
+min_frequency = "10000"
+excluded_words = {"and", "the", "bobby"}
 
 # Fixed timestamp for testing
 timestamp = datetime(2023, 6, 13, 21, 0, 0)
@@ -69,7 +70,7 @@ expected_bigquery_dataset_after_load = [
     {"timestamp": timestamp_str, "word": "eve", "frequency": 10000},
 ]
 expected_bigquery_delete_query = (
-    f"DELETE FROM `{bigquery_table}` WHERE timestamp = '{timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
+    f"DELETE FROM `{bigquery_table_id}` WHERE timestamp = '{timestamp.strftime('%Y-%m-%d %H:%M:%S')}'"
 )
 
 # Eventbridge triggers
@@ -127,21 +128,23 @@ mock_bigquery_client = MockBigQueryClient()
 # E2E test
 @moto.mock_s3
 @patch("requests.get", return_value=requests_get_response)
-@patch("src.extract.load_sites_from_yaml", return_value=[site_from_yaml])
-@patch("src.extract.s3_bucket_name", s3_bucket_name)
-@patch("src.extract.extract_s3_prefix", extract_s3_prefix)
-@patch("src.extract.get_current_timestamp", return_value=timestamp)
-@patch("src.transform.transform_s3_prefix", transform_s3_prefix)
-@patch("src.transform.writable_path", transform_writable_path)
-@patch("src.transform.word_count_threshold", transform_word_count_threshold)
-@patch("src.load.bigquery_table_id", bigquery_table)
-@patch("src.load.bigquery_delete_before_write", bigquery_delete_before_write)
-@patch("src.load.min_word_length", min_word_length)
-@patch("src.load.min_frequency", min_frequency)
-@patch("src.load.excluded_words", excluded_words)
+@patch("newswatch.extract.load_sites_from_yaml", return_value=[site_from_yaml])
+@patch("newswatch.extract.get_current_timestamp", return_value=timestamp)
+@patch("newswatch.transform.WRITABLE_PATH", transform_writable_path)
+@patch("newswatch.load.load_excluded_words", return_value=excluded_words)
 @patch("common.utils._get_bq_client", return_value=mock_bigquery_client)
 def test_newswatch_e2e(*__args):
     # Setup
+    mp = MonkeyPatch()
+    mp.setenv("S3_BUCKET_NAME", s3_bucket_name)
+    mp.setenv("EXTRACT_S3_PREFIX", extract_s3_prefix)
+    mp.setenv("TRANSFORM_S3_PREFIX", transform_s3_prefix)
+    mp.setenv("TRANSFORM_WORD_COUNT_THRESHOLD", transform_word_count_threshold)
+    mp.setenv("BIGQUERY_TABLE_ID", bigquery_table_id)
+    mp.setenv("BIGQUERY_DELETE_BEFORE_WRITE", bigquery_delete_before_write)
+    mp.setenv("MIN_WORD_LENGTH", min_word_length)
+    mp.setenv("MIN_FREQUENCY", min_frequency)
+
     s3_client = boto3.client("s3", region_name="us-east-1")
     s3_client.create_bucket(Bucket=s3_bucket_name)
 

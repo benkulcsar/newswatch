@@ -146,6 +146,7 @@ every
 everything
 example
 experience
+expert
 explain
 eye
 f
@@ -161,6 +162,7 @@ feel
 feet
 few
 field
+final
 find
 fire
 first
@@ -173,6 +175,7 @@ for
 form
 found
 four
+free
 friend
 from
 front
@@ -276,6 +279,7 @@ low
 m
 machine
 made
+major
 make
 man
 many
@@ -294,6 +298,7 @@ mind
 minute
 miss
 money
+moment
 month
 moon
 more
@@ -385,6 +390,10 @@ record
 red
 relationship
 remember
+report
+reveal
+revealed
+reveals
 right
 river
 road
@@ -411,6 +420,7 @@ sentence
 serve
 set
 several
+sign
 shape
 she
 ship
@@ -538,6 +548,7 @@ white
 who
 why
 will
+win
 wind
 winter
 with

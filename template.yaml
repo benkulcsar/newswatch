@@ -159,7 +159,7 @@ Resources:
       MemorySize: 192
       FunctionName: !Sub newswatch-extract-${Env}
       Handler: extract.lambda_handler
-      CodeUri: src
+      CodeUri: src/newswatch
       Description: !Sub Newswatch Extract Function (${Env})
       Architectures:
       - x86_64
@@ -188,7 +188,7 @@ Resources:
       MemorySize: 512
       FunctionName: !Sub newswatch-transform-${Env}
       Handler: transform.lambda_handler
-      CodeUri: src
+      CodeUri: src/newswatch
       Description: !Sub Newswatch Transform Function (${Env})
       Architectures:
       - x86_64
@@ -209,7 +209,7 @@ Resources:
       MemorySize: 128
       FunctionName: !Sub newswatch-load-${Env}
       Handler: load.lambda_handler
-      CodeUri: src
+      CodeUri: src/newswatch
       Description: !Sub Newswatch Load Function (${Env})
       Architectures:
       - x86_64
@@ -246,7 +246,7 @@ Resources:
       Policies:
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt NewsWatchLambdaErrorsSnsTopic.TopicName
-      # TODO: The CloudWatch log groups won't exist until the functions are deployed, so this will fail
+      # The CloudWatch log groups won't exist until the functions are deployed, so this will fail for the first time
       Events:
         ExtractErrorEvent:
           Type: CloudWatchLogs

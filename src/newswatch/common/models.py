@@ -1,3 +1,7 @@
+"""
+Pydantic definitions of pipeline data models.
+"""
+
 from datetime import datetime
 
 from pydantic import BaseModel, HttpUrl, StrictStr

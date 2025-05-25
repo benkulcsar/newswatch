@@ -3,22 +3,22 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from src.common.models import Headline, WordFrequency
-from src.transform import (
-    get_wordnet_corpus,
-    count_words_in_text,
-    group_headlines_by_site,
+from newswatch.common.models import Headline, WordFrequency
+from newswatch.transform import (
     calculate_word_frequencies,
     calculate_word_frequencies_by_site,
+    count_words_in_text,
     filter_sites,
-    sum_frequencies,
+    get_wordnet_corpus,
+    group_headlines_by_site,
     merge_site_word_frequencies,
+    sum_frequencies,
 )
 
 
-@patch("src.transform.get_s3_object_age_days")
-@patch("src.transform.download_from_s3", return_value="downloaded from S3")
-@patch("src.transform.upload_to_s3", return_value="uploaded to S3")
+@patch("newswatch.transform.get_s3_object_age_days")
+@patch("newswatch.transform.download_from_s3", return_value="downloaded from S3")
+@patch("newswatch.transform.upload_to_s3", return_value="uploaded to S3")
 @patch("nltk.download", return_value="downloaded from NLTK")
 @patch("nltk.data.path")
 def test_get_wordnet_corpus(mock_nltk_path, mock_download_nltk, mock_upload_s3, mock_download_s3, mock_age_days):
@@ -75,9 +75,6 @@ def test_group_headlines_by_site(test_site_headlines_collection):
     assert set(grouped.keys()) == {"abc", "def"}
     assert len(grouped["abc"]) == 3
     assert len(grouped["def"]) == 3
-
-
-# TODO: create fixtures from similar/same data
 
 
 @pytest.mark.parametrize(

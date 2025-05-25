@@ -1,8 +1,12 @@
-from datetime import datetime
+"""
+Transform raw headlines into structured word frequency records.
+"""
+
 import os
 import re
 import sys
 from collections import Counter
+from datetime import datetime
 
 import nltk
 from textblob import Word
@@ -22,23 +26,30 @@ from common.utils import (
     upload_to_s3,
 )
 
+logger = get_logger()
+
+is_local = os.environ.get("AWS_EXECUTION_ENV") is None
+is_pytest = "pytest" in sys.modules
+
+WRITABLE_PATH = "/tmp"
+
 
 def get_wordnet_corpus(bucket: str) -> None:
     """Download or update the WordNet corpus from S3 if outdated."""
 
-    wordnet_file_path = f"{writable_path}/corpora/wordnet.zip"
+    wordnet_file_path = f"{WRITABLE_PATH}/corpora/wordnet.zip"
     wordnet_s3_key = "nltk/corpora/wordnet.zip"
 
     wordnet_age_days: int | None = get_s3_object_age_days(bucket=bucket, key=wordnet_s3_key)
     max_wordnet_age_days = 7
 
     if wordnet_age_days is None or wordnet_age_days > max_wordnet_age_days:
-        nltk.download("wordnet", download_dir=writable_path)
+        nltk.download("wordnet", download_dir=WRITABLE_PATH)
         upload_to_s3(bucket=bucket, key=wordnet_s3_key, filename=f"{wordnet_file_path}")
     else:
         download_from_s3(bucket=bucket, key=wordnet_s3_key, filename=wordnet_file_path)
 
-    nltk.data.path.append(writable_path)
+    nltk.data.path.append(WRITABLE_PATH)
 
 
 def count_words_in_text(text: str) -> dict[str, int]:
@@ -67,7 +78,6 @@ def calculate_word_frequencies(text: str) -> dict[str, float]:
     """
     Calculate word frequencies in the given text.
     Note: multiplied by 100,000 for backward compatibility.
-    TODO: review
     """
 
     compatibility_multiplier = 100_000
@@ -126,11 +136,14 @@ def merge_site_word_frequencies(
 
     filtered_sites = filter_sites(site_word_frequencies, word_count_threshold)
     site_count = len(filtered_sites)
-    arbitrary_timestamp = next(iter(next(iter(filtered_sites.values())))).timestamp
+    if site_count == 0:
+        raise ValueError("No sites matched the filter criteria, cannot merge frequencies.")
+    first_site_freqs = next(iter(filtered_sites.values()))
+    timestamp = first_site_freqs[0].timestamp
     total_frequencies = sum_frequencies(filtered_sites)
 
     merged_frequencies = [
-        WordFrequency(word=word, frequency=total / site_count, timestamp=arbitrary_timestamp)
+        WordFrequency(word=word, frequency=total / site_count, timestamp=timestamp)
         for word, total in total_frequencies.items()
     ]
 
@@ -158,35 +171,29 @@ def transform(bucket: str, site_headline_list_s3_key: str) -> None:
 
     headlines_grouped_by_site = group_headlines_by_site(headlines)
 
-    """
-    Each record must include a timestamp due to the flat data structure.
-    This redundancy is acceptable since the dataset is small enough to fit in memory
-    and is efficiently stored in Parquet format in S3.
-    """
+    # Each record must include a timestamp due to the flat data structure.
+    # This redundancy is acceptable since the dataset is small enough to fit in memory
+    # and is efficiently stored in Parquet format in S3.
     extraction_timestamp = get_datetime_from_s3_key(site_headline_list_s3_key)
     word_frequencies_by_site = calculate_word_frequencies_by_site(
         headlines_grouped_by_site=headlines_grouped_by_site,
         timestamp=extraction_timestamp,
     )
 
+    word_count_threshold = int(os.environ.get("TRANSFORM_WORD_COUNT_THRESHOLD", "0"))
     word_frequencies = merge_site_word_frequencies(word_frequencies_by_site, word_count_threshold)
-
-    object_key = build_s3_key(
-        prefix=transform_s3_prefix,
-        timestamp=get_datetime_from_s3_key(site_headline_list_s3_key),
-        extension="parquet",
-    )
     data_bytes = convert_objects_to_parquet_bytes(word_frequencies)
 
-    if is_local and not is_pytest:
-        test_s3_response: dict = put_to_s3(
-            bucket_name=bucket,
-            key=os.environ.get("TEST_S3_TRANSFORM_KEY"),
-            data=data_bytes,
+    if (not is_local) or is_pytest:
+        transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
+        object_key = build_s3_key(
+            prefix=transform_s3_prefix,
+            timestamp=get_datetime_from_s3_key(site_headline_list_s3_key),
+            extension="parquet",
         )
-        logger.info(test_s3_response)
-        breakpoint()
-        return
+    else:
+        bucket = os.environ.get("TEST_S3_BUCKET_NAME", bucket)
+        object_key = os.environ.get("TEST_S3_TRANSFORM_KEY", "")
 
     s3_response = put_to_s3(
         bucket_name=bucket,
@@ -197,19 +204,6 @@ def transform(bucket: str, site_headline_list_s3_key: str) -> None:
     if s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 200:
         logger.info(f"Uploaded word counts to S3: {bucket}/{object_key}")
 
-
-# Lambda cold start
-
-
-logger = get_logger()
-
-transform_s3_prefix = os.environ.get("TRANSFORM_S3_PREFIX", "")
-word_count_threshold = int(os.environ.get("TRANSFORM_WORD_COUNT_THRESHOLD", "0"))
-
-writable_path = "/tmp"
-
-is_local = os.environ.get("AWS_EXECUTION_ENV") is None
-is_pytest = "pytest" in sys.modules
 
 # Lambda handler
 
