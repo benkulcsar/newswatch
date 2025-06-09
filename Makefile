@@ -1,4 +1,4 @@
-.PHONY: lint test validate check test-cov badge build
+.PHONY: lint test validate check test-cov badge build upgrade
 
 lint:
 	uv run pre-commit run -a
@@ -49,3 +49,9 @@ tf-plan-dev:
 
 tf-plan-live:
 	terraform -chdir="./terraform" plan -var-file="./vars/live.tfvars"
+
+upgrade:
+	uv lock --upgrade
+
+reqtxt:
+	uv export --no-hashes --format requirements-txt > ./src/newswatch/requirements.txt

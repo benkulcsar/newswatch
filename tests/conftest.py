@@ -1,10 +1,11 @@
 import datetime
 
 import pytest
-from pydantic import HttpUrl
-from pydantic.tools import parse_obj_as
+from pydantic import HttpUrl, TypeAdapter
 
 from newswatch.common.models import Filter, Headline, Site, WordFrequency
+
+url_adapter = TypeAdapter(HttpUrl)
 
 
 @pytest.fixture
@@ -12,22 +13,22 @@ def test_sites() -> list[Site]:
     return [
         Site(
             name="site1",
-            url=parse_obj_as(HttpUrl, "https://www.site1.com"),
+            url=url_adapter.validate_python("https://www.site1.com"),
             filters=[Filter(tag="a", attrs={"href": "hey"})],
         ),
         Site(
             name="site2",
-            url=parse_obj_as(HttpUrl, "https://site2.com"),
+            url=url_adapter.validate_python("https://site2.com"),
             filters=[Filter(tag="x", attrs={"keyonly": None})],
         ),
         Site(
             name="site3",
-            url=parse_obj_as(HttpUrl, "https://site3.co.uk"),
+            url=url_adapter.validate_python("https://site3.co.uk"),
             filters=[Filter(tag="p", attrs=None)],
         ),
         Site(
             name="site4",
-            url=parse_obj_as(HttpUrl, "https://site4.news"),
+            url=url_adapter.validate_python("https://site4.news"),
             filters=[
                 Filter(tag="h2", attrs=None),
                 Filter(tag="h3", attrs=None),
@@ -36,12 +37,12 @@ def test_sites() -> list[Site]:
         ),
         Site(
             name="site5",
-            url=parse_obj_as(HttpUrl, "https://site5.co"),
+            url=url_adapter.validate_python("https://site5.co"),
             filters=[Filter(tag=None, attrs={"aaa": "AAA"}), Filter(tag=None, attrs={"bbb": "BBB"})],
         ),
         Site(
             name="site6",
-            url=parse_obj_as(HttpUrl, "https://www.site6.com"),
+            url=url_adapter.validate_python("https://www.site6.com"),
             filters=[Filter(tag="A", attrs={"B": "C"}), Filter(tag="XX", attrs={"YY": "ZZ"})],
         ),
     ]

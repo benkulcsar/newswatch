@@ -24,7 +24,12 @@ def test_load_sites_from_yaml(test_sites: list[Site]) -> None:
         yaml_path="tests/fixtures/sites-with-filters_yaml/valid.yaml",
     )
 
-    assert loaded_sites == expected_sites, "Sites loaded from YAML do not match expected sites"
+    # Pydantic V2 has stricter equality checks:
+    # https://docs.pydantic.dev/latest/migration/#changes-to-pydanticbasemodel
+    loaded_sites_data = [site.model_dump() for site in loaded_sites]
+    expected_sites_data = [site.model_dump() for site in expected_sites]
+
+    assert loaded_sites_data == expected_sites_data, "Sites loaded from YAML do not match expected sites"
 
 
 @pytest.mark.parametrize("yaml", ["empty_filter.yaml", "not_string_filter.yaml"])
@@ -68,8 +73,11 @@ def test_extract_headline_strings(
 
 
 def test_get_headlines(test_sites: list[Site], test_timestamp: datetime):
-    with patch("newswatch.extract.extract_headline_strings", return_value=["foo", "bar"]), patch(
-        "newswatch.extract.scrape_url",
+    with (
+        patch("newswatch.extract.extract_headline_strings", return_value=["foo", "bar"]),
+        patch(
+            "newswatch.extract.scrape_url",
+        ),
     ):
         expected_headlines = [
             Headline(site_name=site.name, timestamp=test_timestamp, headline=headline)
@@ -79,4 +87,9 @@ def test_get_headlines(test_sites: list[Site], test_timestamp: datetime):
 
         extracted_headlines = get_headlines(sites=test_sites, timestamp=test_timestamp)
 
-        assert extracted_headlines == expected_headlines
+        # Pydantic V2 has stricter equality checks
+        # https://docs.pydantic.dev/latest/migration/#changes-to-pydanticbasemodel
+        expected_headlines_data = [site.model_dump() for site in expected_headlines]
+        extracted_headlines_data = [site.model_dump() for site in extracted_headlines]
+
+        assert extracted_headlines_data == expected_headlines_data

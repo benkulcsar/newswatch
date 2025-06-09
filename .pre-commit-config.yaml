@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
         args: ['--unsafe']
@@ -11,28 +11,28 @@ repos:
       - id: detect-private-key
       - id: mixed-line-ending
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.3.0
+    rev: v3.2.0
     hooks:
       - id: add-trailing-comma
         args: [ --py36-plus ]
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 7.2.0
     hooks:
       - id: flake8
   - repo: https://github.com/ambv/black
-    rev: 23.3.0
+    rev: 25.1.0
     hooks:
       - id: black
-        language_version: python3.12
+        language_version: python3.12.8
         args: ['--line-length', '120']
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.2.0
+    rev: v1.16.0
     hooks:
       - id: mypy
         args: [--check-untyped-defs]
         additional_dependencies: [ types-requests, types-PyYAML ]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: "v1.94.1"
+    rev: "v1.99.3"
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
