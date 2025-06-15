@@ -15,10 +15,10 @@ repos:
     hooks:
       - id: add-trailing-comma
         args: [ --py36-plus ]
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.2.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
     hooks:
-      - id: flake8
+      - id: ruff-check
   - repo: https://github.com/ambv/black
     rev: 25.1.0
     hooks:
