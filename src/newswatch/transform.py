@@ -143,7 +143,7 @@ def merge_site_word_frequencies(
     total_frequencies = sum_frequencies(filtered_sites)
 
     merged_frequencies = [
-        WordFrequency(word=word, frequency=total / site_count, timestamp=timestamp)
+        WordFrequency(word=word, frequency=total // site_count, timestamp=timestamp)
         for word, total in total_frequencies.items()
     ]
 

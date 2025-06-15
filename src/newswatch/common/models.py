@@ -34,5 +34,5 @@ class WordFrequency(BaseModel):
     """Represents a word's frequency at a specific extraction timestamp."""
 
     word: StrictStr
-    frequency: float
+    frequency: int
     timestamp: datetime
