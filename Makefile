@@ -54,4 +54,4 @@ upgrade:
 	uv lock --upgrade
 
 reqtxt:
-	uv export --no-hashes --format requirements-txt > ./src/newswatch/requirements.txt
+	uv export --no-hashes --no-dev --format requirements-txt > ./src/newswatch/requirements.txt
