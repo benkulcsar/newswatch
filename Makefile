@@ -1,4 +1,4 @@
-.PHONY: lint test validate check test-cov badge build
+.PHONY: lint test validate check test-cov badge build upgrade
 
 lint:
 	uv run pre-commit run -a
@@ -12,9 +12,10 @@ validate:
 check: lint test validate
 
 test-cov:
-	uv run pytest --junitxml=pytest.xml --cov=src
+	uv run pytest --junitxml=pytest.xml
 
 badge: test-cov
+	rm -f ./assets/img/coverage.svg && \
 	uv run coverage-badge -o ./assets/img/coverage.svg
 
 build:
@@ -49,3 +50,9 @@ tf-plan-dev:
 
 tf-plan-live:
 	terraform -chdir="./terraform" plan -var-file="./vars/live.tfvars"
+
+upgrade:
+	uv lock --upgrade
+
+reqtxt:
+	uv export --no-hashes --no-dev --format requirements-txt > ./src/newswatch/requirements.txt

@@ -1,18 +1,22 @@
 [project]
 name = "newswatch"
 description = "Watching news headlines and counting words in them "
-requires-python = "~=3.12.5"
-version = "0.0.1"
+version = "1.0.0"
+requires-python = "==3.12.8"
+authors = [{ name = "Ben Kulcsar" }]
+license = { text = "MIT License" }
+readme = "README.md"
+
 dependencies = [
-    "beautifulsoup4~=4.12.3",
-    "boto3~=1.34.162",
-    "google-cloud-bigquery~=3.25.0",
-    "nltk~=3.9.1",
-    "pyarrow~=19.0.1",
-    "pydantic~=1.10.7",
-    "pyyaml~=6.0",
-    "requests~=2.32.3",
-    "textblob~=0.17.1",
+    "beautifulsoup4>=4.12.3",
+    "boto3>=1.34.162",
+    "google-cloud-bigquery>=3.25.0",
+    "nltk>=3.9.1",
+    "pyarrow>=19.0.1",
+    "pydantic>=1.10.7",
+    "pyyaml>=6.0",
+    "requests>=2.32.4",
+    "textblob>=0.17.1",
 ]
 
 packages = [
@@ -27,20 +31,23 @@ ignore_missing_imports = true
 
 [tool.black]
 line-length = 120
-target_version = ['py310']
+target_version = ['py312']
 include = '\.pyi?$'
+
+[tool.coverage.paths]
+source = ["src"]
 
 [dependency-groups]
 dev = [
-    "flake8~=7.1.0",
-    "moto[s3]~=4.1.9",
-    "mypy~=1.11.1",
-    "pre-commit~=3.8.0",
-    "pydantic~=1.10.7",
-    "pyfakefs~=5.6.0",
-    "pytest-cov~=6.0.0",
-    "pytest~=8.3.2",
-    "types-pyyaml~=6.0.12",
-    "types-requests~=2.32.0",
+    "moto[s3]>=4.1.9",
+    "mypy>=1.11.1",
+    "pre-commit>=3.8.0",
+    "pydantic>=1.10.7",
+    "pyfakefs>=5.6.0",
+    "pytest-cov>=6.0.0",
+    "pytest>=8.3.2",
+    "types-pyyaml>=6.0.12",
+    "types-requests>=2.32.0",
     "coverage-badge>=1.1.2",
+    "ruff>=0.11.13",
 ]

@@ -10,8 +10,8 @@ from pydantic import BaseModel, HttpUrl, StrictStr
 class Filter(BaseModel):
     """Defines a filter for extracting elements from a BeautifulSoup object."""
 
-    tag: StrictStr | None
-    attrs: dict[str, str | None] | None
+    tag: StrictStr | None = None
+    attrs: dict[str, str | None] | None = None
 
 
 class Site(BaseModel):

@@ -6,8 +6,7 @@ from unittest.mock import patch
 import boto3
 import moto
 import pyarrow.parquet as pq
-from pydantic import HttpUrl
-from pydantic.tools import parse_obj_as
+from pydantic import HttpUrl, TypeAdapter
 from pytest import MonkeyPatch
 from requests.models import Response
 
@@ -15,6 +14,8 @@ from newswatch.common.models import Filter, Site
 from newswatch.extract import lambda_handler as extract_lambda_handler
 from newswatch.load import lambda_handler as load_lambda_handler
 from newswatch.transform import lambda_handler as transform_lambda_handler
+
+url_adapter = TypeAdapter(HttpUrl)
 
 # Variables that are set based on environment variables in the pipelines
 s3_bucket_name = "test-bucket"
@@ -88,7 +89,7 @@ load_trigger_event = {
 # Extract mocks
 site_from_yaml = Site(
     name="site",
-    url=parse_obj_as(HttpUrl, "https://www.site.com"),
+    url=url_adapter.validate_python("https://www.site.com"),
     filters=[Filter(tag="h2", attrs={"ping": "pong"})],
 )
 site_html = b"""
@@ -126,7 +127,7 @@ mock_bigquery_client = MockBigQueryClient()
 
 
 # E2E test
-@moto.mock_s3
+@moto.mock_aws
 @patch("requests.get", return_value=requests_get_response)
 @patch("newswatch.extract.load_sites_from_yaml", return_value=[site_from_yaml])
 @patch("newswatch.extract.get_current_timestamp", return_value=timestamp)

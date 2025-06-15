@@ -16,7 +16,7 @@ while [[ $current_date -le $end_date ]]; do
     day=$(date -d "$date_string" +%d)
 
     for hour in {00..23}; do
-        key="${prefix}/year=${year}/month=${month}/day=${day}/hour=${hour}.json"
+        key="${prefix}/year=${year}/month=${month}/day=${day}/hour=${hour}.parquet"
 
         echo $key
 

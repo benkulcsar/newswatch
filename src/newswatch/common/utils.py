@@ -44,7 +44,7 @@ def coalesce_dict_values(dct: dict[str, str | None], default: T) -> dict[str, st
 def convert_objects_to_parquet_bytes(object_collection: list) -> bytes:
     """Convert a list of objects to Parquet format and return as bytes."""
 
-    data = [obj.dict() for obj in object_collection]
+    data = [obj.model_dump() for obj in object_collection]
     table = pa.Table.from_pylist(data)
     sink = io.BytesIO()
     pq.write_table(table, sink, compression="gzip")

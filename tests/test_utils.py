@@ -44,7 +44,7 @@ class DummyObject:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-    def dict(self):
+    def model_dump(self):
         return self.__dict__
 
 
@@ -145,7 +145,7 @@ def test_get_logger(caplog):
 
 @pytest.fixture(scope="function")
 def s3_setup():
-    with moto.mock_s3():
+    with moto.mock_aws():
         test_bucket = "test-bucket"
         s3_client = boto3.client("s3", region_name="us-east-1")
         s3_client.create_bucket(Bucket=test_bucket)
