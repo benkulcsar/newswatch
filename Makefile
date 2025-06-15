@@ -12,9 +12,10 @@ validate:
 check: lint test validate
 
 test-cov:
-	uv run pytest --junitxml=pytest.xml --cov=src
+	uv run pytest --junitxml=pytest.xml
 
 badge: test-cov
+	rm -f ./assets/img/coverage.svg && \
 	uv run coverage-badge -o ./assets/img/coverage.svg
 
 build:
