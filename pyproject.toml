@@ -15,7 +15,7 @@ dependencies = [
     "pyarrow>=19.0.1",
     "pydantic>=1.10.7",
     "pyyaml>=6.0",
-    "requests>=2.32.3",
+    "requests>=2.32.4",
     "textblob>=0.17.1",
 ]
 

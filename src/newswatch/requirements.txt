@@ -33,7 +33,7 @@ pydantic-core==2.33.2
 python-dateutil==2.9.0.post0
 pyyaml==6.0.2
 regex==2024.11.6
-requests==2.32.3
+requests==2.32.4
 rsa==4.9.1
 s3transfer==0.13.0
 six==1.17.0
