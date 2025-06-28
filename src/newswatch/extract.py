@@ -9,6 +9,8 @@ from datetime import datetime
 import requests
 import yaml
 from bs4 import BeautifulSoup
+from aws_lambda_typing.events import EventBridgeEvent
+from aws_lambda_typing.context import Context
 
 from common.models import Filter, Headline, Site
 from common.utils import (
@@ -131,7 +133,7 @@ def extract() -> None:
 # Lambda handler
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: EventBridgeEvent, context: Context) -> None:
     extract()
 
 

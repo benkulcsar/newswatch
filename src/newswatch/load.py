@@ -5,6 +5,9 @@ Load processed word frequency records into a BigQuery table.
 import os
 import sys
 
+from aws_lambda_typing.events import S3Event
+from aws_lambda_typing.context import Context
+
 from common.models import WordFrequency
 from common.utils import (
     DeleteFailedError,
@@ -108,7 +111,7 @@ def load(bucket: str, word_frequencies_key: str) -> None:
 # Lambda handler
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: S3Event, context: Context) -> None:
     bucket, key = extract_s3_bucket_and_key_from_event(event)
     load(bucket, key)
 

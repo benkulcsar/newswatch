@@ -8,6 +8,7 @@ license = { text = "MIT License" }
 readme = "README.md"
 
 dependencies = [
+    "aws-lambda-typing>=2.20.0",
     "beautifulsoup4>=4.12.3",
     "boto3>=1.34.162",
     "google-cloud-bigquery>=3.25.0",
