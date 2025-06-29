@@ -10,6 +10,8 @@ from datetime import datetime
 
 import nltk
 from textblob import Word
+from aws_lambda_typing.events import S3Event
+from aws_lambda_typing.context import Context
 
 from common.models import Headline, WordFrequency
 from common.utils import (
@@ -87,7 +89,7 @@ def calculate_word_frequencies(text: str) -> dict[str, float]:
 
 
 def calculate_word_frequencies_by_site(
-    headlines_grouped_by_site,
+    headlines_grouped_by_site: dict[str, list[Headline]],
     timestamp: datetime,
 ) -> dict[str, list[WordFrequency]]:
     """Compute word frequencies for each site."""
@@ -208,7 +210,7 @@ def transform(bucket: str, site_headline_list_s3_key: str) -> None:
 # Lambda handler
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: S3Event, context: Context) -> None:
     bucket, key = extract_s3_bucket_and_key_from_event(event)
     transform(bucket, key)
 

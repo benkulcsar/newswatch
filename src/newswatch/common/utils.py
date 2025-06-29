@@ -82,10 +82,10 @@ def extract_s3_bucket_and_key_from_event(event: dict) -> tuple[str, str]:
     return event["detail"]["bucket"]["name"], event["detail"]["object"]["key"]
 
 
-def put_to_s3(bucket_name: str, key: str, data: bytes) -> dict:
+def put_to_s3(bucket_name: str, key: str, data: bytes) -> dict[str, Any]:
     """Upload binary data to an S3 bucket."""
     s3 = boto3.client("s3")
-    return s3.put_object(Bucket=bucket_name, Key=key, Body=data)
+    return s3.put_object(Bucket=bucket_name, Key=key, Body=data)  # type: ignore  # mypy-boto3 stub is too specific
 
 
 def get_from_s3(bucket_name: str, key: str) -> bytes:
@@ -164,14 +164,14 @@ def get_logger() -> logging.Logger:
     return logging.getLogger()
 
 
-def call_and_catch_error_with_logging(logger: logging.Logger):
+def call_and_catch_error_with_logging(logger: logging.Logger) -> Callable:
     """
     Decorator that logs exceptions but allows execution to continue.
     This prevents a failure in one site's extraction from stopping the entire process.
     """
 
     def decorator(func: Callable) -> Callable:
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return func(*args, **kwargs)
             except Exception as e:

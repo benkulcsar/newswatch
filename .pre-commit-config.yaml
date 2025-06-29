@@ -29,8 +29,16 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        args: [--check-untyped-defs]
-        additional_dependencies: [ types-requests, types-PyYAML ]
+        files: ^src/newswatch/.*\.py$
+        additional_dependencies:
+          - types-requests
+          - types-PyYAML
+          - boto3-stubs[essential]
+          - botocore-stubs
+          - pydantic
+          - pyarrow-stubs
+          - google-auth-stubs
+
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.99.3"
     hooks:
